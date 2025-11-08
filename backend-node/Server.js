@@ -1,13 +1,34 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import express from "express";
+import mongoose from "mongoose";
+import bodyParser from "body-parser";
+import cors from "cors";
+import dotenv from "dotenv";
+
+const app = express();
+const PORT = process.env.PORT || 5000;
 
 dotenv.config();
-const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
-app.get('/', (req, res) => res.send('Node backend running...'));
+const URL = process.env.MONGO_DB;
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Node server running on port ${PORT}`));
+mongoose.connect(URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+app.listen(PORT, () => {
+  console.log("***************************************");
+  console.log(`Server Running on port number : ${PORT}`);
+});
+
+const connection = mongoose.connection;
+connection.once("open", () => {
+  console.log("MONGO_DB Connection successfull......!!");
+  console.log("***************************************");
+});
+
+
+import User from "./router/User.js";
+app.use("/user", User);
