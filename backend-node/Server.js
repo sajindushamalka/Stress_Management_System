@@ -32,3 +32,7 @@ connection.once("open", () => {
 
 import User from "./router/User.js";
 app.use("/user", User);
+import Lecture from "./router/Lecture.js";
+app.use("/lecture", Lecture);
+import DatesBook from "./router/DatesBook.js";
+app.use("/date", DatesBook);

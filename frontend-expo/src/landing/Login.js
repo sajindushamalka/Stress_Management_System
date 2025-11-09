@@ -6,10 +6,10 @@ import Field from "../component/Field";
 import LandingPageButton from "../component/LandingPageButton";
 import { AuthContext } from "../context/AuthContext";
 import axios from "axios";
-// import UserApi from "../Api/UserApi";
+import Node from "../api/node/Node";
 
 const Login = (props) => {
-    const { UserLogin } = useContext(AuthContext);
+    const { UserLogin, saveUserDeatils } = useContext(AuthContext);
     const [uEmail, setEmail] = useState("");
     const [uPassword, setPassword] = useState("");
 
@@ -24,9 +24,11 @@ const Login = (props) => {
                 password:uPassword
             };
             
-            axios.post("http://192.168.1.45:5000/user/Signin", ob)
+            Node.post("/user/Signin", ob)
                 .then(response => {
                     UserLogin();
+                    console.log(response.data)
+                    saveUserDeatils(response.data)
                     props.navigation.navigate("Home"); // Navigate after setting the token
                 })
                 .catch(() => {

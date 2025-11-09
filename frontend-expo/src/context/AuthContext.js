@@ -6,6 +6,7 @@ export const AuthProvider = ({children}) => {
 
     const [isLoading,setIsLoading] = useState(false);
     const [userToken,setUserToken] = useState(null);
+    const [userDetails,setUserDeatils] = useState([]);
 
     const UserLogin = () => {
         setUserToken('jhbiakbfkf');
@@ -17,8 +18,12 @@ export const AuthProvider = ({children}) => {
         setIsLoading(false);
     }
 
+    const saveUserDeatils = (ob) =>{
+        setUserDeatils(ob)
+    }
+
     return (
-        <AuthContext.Provider value={{UserLogOut, UserLogin, isLoading, userToken}}>
+        <AuthContext.Provider value={{UserLogOut, UserLogin,saveUserDeatils, isLoading, userToken, userDetails}}>
             {children}
         </AuthContext.Provider>
     )

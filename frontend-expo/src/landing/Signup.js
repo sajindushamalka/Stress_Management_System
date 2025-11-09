@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import Background from "../component/Background";
 import { darkGreen } from "../component/LandingPageConstants";
 import LandingPageButton from "../component/LandingPageButton";
-// import UserApi from "../Api/UserApi";
+import Node from "../api/node/Node";
 import axios from "axios";
 
 const Signup = (props) => {
@@ -32,7 +32,7 @@ const Signup = (props) => {
               password:uPassword,
             };
             console.log('check',ob)
-            axios.post("http://192.168.1.45:5000/user/Signup", ob)
+            Node.post("/user/Signup", ob)
               .then(() => {
                 alert("User Registred!");
                 props.navigation.navigate("Login");

@@ -5,7 +5,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Home from "./src/pages/Home";
 import Login from "./src/landing/Login";
 import Signup from "./src/landing/Signup";
-
+import AcademicsDashboard from "./src/academics_stress/AcademicDashboard";
+import LectureInfo from "./src/academics_stress/LectureInfo";
 import { AuthContext } from "./src/context/AuthContext";
 
 const Stack = createNativeStackNavigator();
@@ -22,18 +23,6 @@ export default function AppNav() {
     }
 
     return (
-        // <NavigationContainer>
-        //     {userToken !== null ? (
-        //         <Stack.Navigator screenOptions={{ headerShown: false }}>
-        //             <Stack.Screen name="Home" component={Home} />
-        //         </Stack.Navigator>
-        //     ) : (
-        //         <Stack.Navigator screenOptions={{ headerShown: false }}>
-        //             <Stack.Screen name="Login" component={Login} />
-        //             <Stack.Screen name="Signup" component={Signup} />
-        //         </Stack.Navigator>
-        //     )}
-        // </NavigationContainer>
         <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 {userToken == null ? (
@@ -44,6 +33,8 @@ export default function AppNav() {
                 ) : (
                     <>
                         <Stack.Screen name="Home" component={Home} />
+                        <Stack.Screen name="AcademicDashboard" component={AcademicsDashboard} />
+                        <Stack.Screen name="LectureInfo" component={LectureInfo} />
                         {/* Add other screens here */}
                     </>
                 )}

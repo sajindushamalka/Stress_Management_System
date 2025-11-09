@@ -30,7 +30,7 @@ export default function Header() {
                     fontWeight: "bold"
                 }}
             >
-                Mind-Fix
+                Fix-Mind
             </Text>
         </View>
     );

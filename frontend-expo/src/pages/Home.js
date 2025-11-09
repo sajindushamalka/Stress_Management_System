@@ -18,7 +18,7 @@ const Home = (props) => {
         <LinearGradient colors={["#ffffffff", "#f3ddc3ff"]} style={styles.container}>
             <Header />
             <ScrollView contentContainerStyle={styles.contentContainer}>
-                <Text style={styles.heading}>Welcome to Mind-Fix</Text>
+                <Text style={styles.heading}>Welcome to Fix-Mind</Text>
 
                 <Text style={styles.description}>
                     Mind-Fix helps students overcome everyday stress by using intelligent tools to create balance in life.

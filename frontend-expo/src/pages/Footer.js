@@ -30,7 +30,7 @@ export default function Footer() {
         />
       </TouchableOpacity>
       
-      <TouchableOpacity onPress={() => navigation.navigate("DiseasesDashboard")}>
+      <TouchableOpacity onPress={() => navigation.navigate("AcademicDashboard")}>
       <FontAwesome
         name="book"
         size={25}
