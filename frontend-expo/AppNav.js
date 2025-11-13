@@ -8,6 +8,7 @@ import Signup from "./src/landing/Signup";
 import AcademicsDashboard from "./src/academics_stress/AcademicDashboard";
 import LectureInfo from "./src/academics_stress/LectureInfo";
 import { AuthContext } from "./src/context/AuthContext";
+import FinancialDashboard from "./src/financial_stress/FinancialDashboard";
 
 const Stack = createNativeStackNavigator();
 
@@ -35,7 +36,9 @@ export default function AppNav() {
                         <Stack.Screen name="Home" component={Home} />
                         <Stack.Screen name="AcademicDashboard" component={AcademicsDashboard} />
                         <Stack.Screen name="LectureInfo" component={LectureInfo} />
-                        {/* Add other screens here */}
+                        
+                        {/* Financial Stress */}
+                        <Stack.Screen name="FinancialDashboard" component={FinancialDashboard}/>
                     </>
                 )}
             </Stack.Navigator>

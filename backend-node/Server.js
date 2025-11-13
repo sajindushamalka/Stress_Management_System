@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 5000;
 
 dotenv.config();
 app.use(cors());
+app.use(express.json());
 app.use(bodyParser.json());
 
 const URL = process.env.MONGO_DB;
@@ -36,3 +37,7 @@ import Lecture from "./router/Lecture.js";
 app.use("/lecture", Lecture);
 import DatesBook from "./router/DatesBook.js";
 app.use("/date", DatesBook);
+
+// Financial Route
+import AddIncome from "./router/AddIncome.js";
+app.use("/income", AddIncome);

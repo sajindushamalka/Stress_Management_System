@@ -39,7 +39,7 @@ export default function Footer() {
       />
       </TouchableOpacity>
       
-      <TouchableOpacity onPress={() => navigation.navigate("HarvestDashboard")}>
+      <TouchableOpacity onPress={() => navigation.navigate("FinancialDashboard")}>
       <FontAwesome
         name="money"
         size={25}
