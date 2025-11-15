@@ -6,7 +6,8 @@ import {
     ScrollView,
     TouchableOpacity,
     Modal,
-    Platform
+    Platform,
+    TextInput
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { FontAwesome } from "@expo/vector-icons";
@@ -18,6 +19,8 @@ import Header from "../pages/Header";
 import Footer from "../pages/Footer";
 import { AuthContext } from "../context/AuthContext";
 import Node from "../api/node/Node";
+import Fast from "../api/fast/Fast";
+import axios from "axios";
 
 const StudyTimeTable = () => {
     const { userDetails } = useContext(AuthContext);
@@ -34,6 +37,15 @@ const StudyTimeTable = () => {
     const [endTime, setEndTime] = useState(new Date());
     const [showStartTimePicker, setShowStartTimePicker] = useState(false);
     const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+
+    const [myLectures, setMyLectures] = useState(['']);
+    const [perDayHours, setPerDayHours] = useState('');
+    const [preferTime, setPreferTime] = useState('');
+    const [sessionLength, setSessionLength] = useState('');
+    const [breakLength, setBreakLength] = useState('');
+    const [weekendStudy, setWeekendStudy] = useState('');
+    const today = new Date();
+
 
     useEffect(() => {
         Node.get(`/date/get/${userDetails.RegisterdUser.email}`)
@@ -68,7 +80,84 @@ const StudyTimeTable = () => {
             .catch((err) => {
                 console.log(err);
             });
+
+        Node.get(`/lecture/get/${userDetails.RegisterdUser.email}`).then((res) => {
+            console.log(res.data)
+            setMyLectures(res.data || []);
+        }).catch((err) => {
+            console.log(err)
+        })
+
     }, []);
+
+
+    const predictModel = async () => {
+        const payload = {
+            subjects: myLectures,
+            unavailable: events,
+            study_hours_per_day: perDayHours,
+            preferred_window: preferTime,
+            year: today.getFullYear(),           // Current year, e.g., 2025
+            month: today.getMonth() + 1
+        }
+
+        console.log(payload)
+
+        axios.post('http://192.168.1.45:8086/generate_timetable', payload).then((res) => {
+            console.log(res.data)
+        }).catch((err) => {
+            console.log(err)
+        })
+
+        // const payload = {
+        //     subjects: myLectures,
+        //     unavailable: events,
+        //     study_hours_per_day: perDayHours,
+        //     preferred_window: preferTime,
+        //     year: today.getFullYear(),
+        //     month: today.getMonth() + 1
+        // };
+        // console.log(payload)
+
+        // try {
+        //     const response = await fetch("http://192.168.1.45:5005/generate_timetable", {
+        //         method: "POST",
+        //         headers: {
+        //             "Content-Type": "application/json", // important
+        //         },
+        //         body: JSON.stringify(payload), // convert JS object to JSON string
+        //     });
+
+        //     const data = await response.json();
+        //     console.log(data);
+        // } catch (error) {
+        //     console.error(error);
+        // }
+
+        // const today = new Date();
+        // const payload = {
+        //     subjects: myLectures,
+        //     unavailable: events,
+        //     study_hours_per_day: perDayHours,
+        //     preferred_window: preferTime,
+        //     year: today.getFullYear(),
+        //     month: today.getMonth() + 1
+        // };
+
+        // try {
+        //     const response = await fetch("http://192.168.1.45:5005/generate_timetable", {
+        //         method: "POST",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify(payload),
+        //     });
+
+        //     const data = await response.json();
+        //     console.log(data);
+        // } catch (error) {
+        //     console.log(error);
+        // }
+
+    }
 
 
 
@@ -131,9 +220,9 @@ const StudyTimeTable = () => {
             <Header />
 
             <ScrollView contentContainerStyle={styles.contentContainer}>
-                <Text style={styles.heading}>Academic Stress</Text>
+                <Text style={styles.heading}>Study Timetable</Text>
 
-                <Calendar
+                {/* <Calendar
                     markingType={"custom"}
                     markedDates={events}
                     onDayPress={handleDayPress}
@@ -146,7 +235,51 @@ const StudyTimeTable = () => {
                         monthTextColor: "#f57c00",
                     }}
                     style={{ borderRadius: 10, margin: 10, elevation: 3 }}
-                />
+                /> */}
+                <Text style={{ textAlign: 'center' }}>----------------------</Text>
+                <Text style={styles.descriptionText}>
+                    30 minutes Game, then take a 15-minute break. Build your ML predictive timetable for this month!
+                </Text>
+                <ScrollView
+                    contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 20 }}
+                    showsVerticalScrollIndicator={true}
+                >
+                    <Text style={styles.dropdownLabel}>
+                        How many hours can you study per day this month?
+                    </Text>
+                    <TextInput
+                        placeholder="Hours"
+                        style={styles.input}
+                        onChangeText={(text) => setPerDayHours(text)}
+                    />
+
+                    {/* Preferred Study Time */}
+                    <View style={styles.dropdownContainer}>
+                        <Text style={styles.dropdownLabel}>What time do you prefer to study?</Text>
+                        <View style={styles.pickerWrapper}>
+                            <Picker
+                                selectedValue={preferTime}        // <-- Make it controlled
+                                onValueChange={(itemValue) => setPreferTime(itemValue)}
+                                style={styles.picker}
+                            >
+                                <Picker.Item label="Select" value="" />
+                                <Picker.Item label="Morning" value="morning" />
+                                <Picker.Item label="Afternoon" value="afternoon" />
+                                <Picker.Item label="Night" value="night" />
+                                <Picker.Item label="Flexible" value="flexible" />
+                            </Picker>
+                        </View>
+                    </View>
+
+
+                    {/* Predict Button */}
+                    <TouchableOpacity
+                        style={[styles.modalButton, { backgroundColor: "#FF8C00" }]}
+                        onPress={predictModel}
+                    >
+                        <Text style={styles.buttonText}>Predict</Text>
+                    </TouchableOpacity>
+                </ScrollView>
 
                 {/* Display all events below calendar */}
                 <View style={{ margin: 10 }}>
@@ -161,7 +294,7 @@ const StudyTimeTable = () => {
                 </View>
 
                 {/* Bottom buttons */}
-                <View style={styles.buttonRow}>
+                {/* <View style={styles.buttonRow}>
                     <TouchableOpacity
                         style={styles.iconButton}
                         onPress={() => navigation.navigate("LectureInfo")}
@@ -176,11 +309,11 @@ const StudyTimeTable = () => {
                     <TouchableOpacity style={styles.iconButton}>
                         <FontAwesome name="calendar" size={28} color="#FF8C00" />
                     </TouchableOpacity>
-                </View>
+                </View> */}
             </ScrollView>
 
             {/* Modal for adding events */}
-            <Modal visible={modalVisible} transparent animationType="slide">
+            {/* <Modal visible={modalVisible} transparent animationType="slide">
                 <View
                     style={{
                         flex: 1,
@@ -201,7 +334,6 @@ const StudyTimeTable = () => {
                             Add Event for {selectedDate}
                         </Text>
 
-                        {/* Reason dropdown */}
                         <View
                             style={{
                                 borderWidth: 1,
@@ -226,7 +358,6 @@ const StudyTimeTable = () => {
                             </Picker>
                         </View>
 
-                        {/* Start Time Picker */}
                         <TouchableOpacity
                             onPress={() => setShowStartTimePicker(true)}
                             style={{
@@ -257,7 +388,6 @@ const StudyTimeTable = () => {
                             />
                         )}
 
-                        {/* End Time Picker */}
                         <TouchableOpacity
                             onPress={() => setShowEndTimePicker(true)}
                             style={{
@@ -290,7 +420,6 @@ const StudyTimeTable = () => {
                         )}
 
 
-                        {/* Modal buttons */}
                         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                             <TouchableOpacity
                                 onPress={handleAddEvent}
@@ -308,7 +437,7 @@ const StudyTimeTable = () => {
                         </View>
                     </View>
                 </View>
-            </Modal>
+            </Modal> */}
 
             <Footer />
         </LinearGradient>
@@ -432,7 +561,49 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#333",
     },
-
+    input: {
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 8,
+        padding: 10,
+        marginBottom: 10,
+    },
+    dropdownContainer: {
+        marginBottom: 15,
+    },
+    dropdownLabel: {
+        fontWeight: "600",
+        color: "#c0c0c0ff",
+        marginBottom: 5,
+    },
+    pickerWrapper: {
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 8,
+        overflow: "hidden",
+    },
+    descriptionText: {
+        fontSize: 16,
+        fontWeight: "500",
+        color: "#7a7979ff",
+        marginBottom: 30,
+        marginTop: 5,
+        textAlign: 'center'
+    },
+    picker: {
+        height: 150,
+    },
+    modalButton: {
+        flex: 1,
+        padding: 10,
+        borderRadius: 8,
+        marginHorizontal: 5,
+        alignItems: "center",
+    },
+    buttonText: {
+        color: "white",
+        fontWeight: "bold",
+    },
 });
 
 export default StudyTimeTable;

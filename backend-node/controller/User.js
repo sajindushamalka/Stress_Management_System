@@ -49,6 +49,8 @@ export const UserRegistration = async (req, res) => {
 export const Signin = async (req, res) => {
     try {
         const RegisterdUser = await User.findOne({ email: req.body.email });
+        console.log(req.body)
+        console.log(RegisterdUser)
         if (RegisterdUser) {
             const enterdPwd = req.body.password;
             const dbPwd = RegisterdUser.password;

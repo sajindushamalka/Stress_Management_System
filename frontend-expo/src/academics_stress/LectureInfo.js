@@ -389,6 +389,7 @@ const styles = StyleSheet.create({
         width: "85%",
         borderRadius: 10,
         padding: 20,
+        height:"80%"
     },
     modalTitle: {
         fontSize: 20,

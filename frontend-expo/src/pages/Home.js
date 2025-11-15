@@ -12,7 +12,8 @@ import Footer from "./Footer";
 import { LinearGradient } from "expo-linear-gradient";
 
 const Home = (props) => {
-    const { UserLogOut } = useContext(AuthContext);
+    const { UserLogOut,userDetails } = useContext(AuthContext);
+    console.log(userDetails)
 
     return (
         <LinearGradient colors={["#ffffffff", "#f3ddc3ff"]} style={styles.container}>
