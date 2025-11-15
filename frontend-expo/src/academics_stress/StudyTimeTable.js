@@ -19,7 +19,7 @@ import Footer from "../pages/Footer";
 import { AuthContext } from "../context/AuthContext";
 import Node from "../api/node/Node";
 
-const AcademicsDashboard = () => {
+const StudyTimeTable = () => {
     const { userDetails } = useContext(AuthContext);
     const navigation = useNavigation();
 
@@ -173,10 +173,7 @@ const AcademicsDashboard = () => {
                         <FontAwesome name="book" size={28} color="#FF8C00" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.iconButton}
-                        onPress={() => navigation.navigate("StudyTimeTable")}
-                    >
+                    <TouchableOpacity style={styles.iconButton}>
                         <FontAwesome name="calendar" size={28} color="#FF8C00" />
                     </TouchableOpacity>
                 </View>
@@ -438,4 +435,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default AcademicsDashboard;
+export default StudyTimeTable;
