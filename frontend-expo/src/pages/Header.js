@@ -4,36 +4,36 @@ import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
 
 export default function Header() {
-    const navigation = useNavigation();
-    return (
-        <View
-            style={{
-                backgroundColor: "#FF8C00",
-                opacity: 0.9,
-                height: 60,
-                padding: 2,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-            }}
-        >
-            <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-                {/* <Image
+  const navigation = useNavigation();
+  return (
+    <View
+      style={{
+        backgroundColor: "#FF8C00",
+        opacity: 0.9,
+        height: 60,
+        padding: 2,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+        {/* <Image
         source={require("../../LoginAndSignup/assets/hjs_logo.png")}
         style={{ width: 35, height: 35, marginLeft: 25 }}
       /> */}
-            </TouchableOpacity>
-            <Text
-                style={{
-                    color: "white",
-                    fontSize: 25,
-                    fontWeight: "bold"
-                }}
-            >
-                Fix-Mind
-            </Text>
-        </View>
-    );
+        <Text
+          style={{
+            color: "white",
+            fontSize: 25,
+            fontWeight: "bold",
+          }}
+        >
+          Fix-Mind
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({});
