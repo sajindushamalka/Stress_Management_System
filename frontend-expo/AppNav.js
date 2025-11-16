@@ -10,6 +10,8 @@ import LectureInfo from "./src/academics_stress/LectureInfo";
 import { AuthContext } from "./src/context/AuthContext";
 import StudyTimeTable from "./src/academics_stress/StudyTimeTable";
 import FinancialDashboard from "./src/financial_stress/FinancialDashboard";
+import ScoialDashboard from "./src/social_stress/SocialDashboard";
+import FriendDashboard from "./src/social_stress/FriendsDashboard";
 
 const Stack = createNativeStackNavigator();
 
@@ -38,6 +40,8 @@ export default function AppNav() {
                         <Stack.Screen name="AcademicDashboard" component={AcademicsDashboard} />
                         <Stack.Screen name="LectureInfo" component={LectureInfo} />
                         <Stack.Screen name="StudyTimeTable" component={StudyTimeTable} />
+                        <Stack.Screen name="SocialDashboard" component={ScoialDashboard} />
+                        <Stack.Screen name="FriendDashboard" component={FriendDashboard} />
                         {/* Add other screens here */}
                         
                         {/* Financial Stress */}

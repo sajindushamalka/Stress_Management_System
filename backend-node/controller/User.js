@@ -82,6 +82,8 @@ export const Signin = async (req, res) => {
 
 
 
+
+
 // export const Signout = (req, res) => {
 //   try {
 //     const refreshToken = req.body.refreshToken;
@@ -97,19 +99,16 @@ export const Signin = async (req, res) => {
 //   }
 // }
 
-// export const getAllUsers = async (req, res) => {
-//   try {
-//     const allusers = await User.find();
-//     if (allusers) {
-//       res.status(200).json({
-//         message: "Fetched Successfull..!",
-//         payload: allusers
-//       })
-//     }
-//   }catch(error){
-//     console.log(error)
-//   }
-// }
+export const getAllUsers = async (req, res) => {
+  try {
+    const allusers = await User.find();
+    if (allusers) {
+      res.status(200).json(allusers)
+    }
+  }catch(error){
+    console.log(error)
+  }
+}
 
 // export const getOneUser = async (req, res) => {
 //   try {

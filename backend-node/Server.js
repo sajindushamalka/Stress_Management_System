@@ -37,6 +37,9 @@ import Lecture from "./router/Lecture.js";
 app.use("/lecture", Lecture);
 import DatesBook from "./router/DatesBook.js";
 app.use("/date", DatesBook);
+import FreindGroup from "./router/FriendGroup.js";
+app.use("/friend", FreindGroup);
+
 
 // Financial Route
 import AddIncome from "./router/AddIncome.js";
