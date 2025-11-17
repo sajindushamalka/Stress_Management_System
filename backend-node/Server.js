@@ -39,7 +39,8 @@ import DatesBook from "./router/DatesBook.js";
 app.use("/date", DatesBook);
 import FreindGroup from "./router/FriendGroup.js";
 app.use("/friend", FreindGroup);
-
+import SavedTimetable from "./router/SavedTimetable.js";
+app.use("/timetable", SavedTimetable);
 
 // Financial Route
 import AddIncome from "./router/AddIncome.js";

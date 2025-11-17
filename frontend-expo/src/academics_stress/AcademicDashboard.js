@@ -169,7 +169,9 @@ const AcademicsDashboard = () => {
                         <FontAwesome name="video-camera" size={28} color="#FF8C00" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.iconButton}>
+                    <TouchableOpacity 
+                    style={styles.iconButton}
+                    onPress={() => navigation.navigate("MLGeneratedTimetable")}>
                         <FontAwesome name="book" size={28} color="#FF8C00" />
                     </TouchableOpacity>
 

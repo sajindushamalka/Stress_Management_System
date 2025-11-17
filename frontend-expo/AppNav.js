@@ -12,6 +12,7 @@ import StudyTimeTable from "./src/academics_stress/StudyTimeTable";
 import FinancialDashboard from "./src/financial_stress/FinancialDashboard";
 import ScoialDashboard from "./src/social_stress/SocialDashboard";
 import FriendDashboard from "./src/social_stress/FriendsDashboard";
+import MLGenaratedTimeTable from "./src/academics_stress/MLGenaratedTimetable";
 
 const Stack = createNativeStackNavigator();
 
@@ -42,6 +43,7 @@ export default function AppNav() {
                         <Stack.Screen name="StudyTimeTable" component={StudyTimeTable} />
                         <Stack.Screen name="SocialDashboard" component={ScoialDashboard} />
                         <Stack.Screen name="FriendDashboard" component={FriendDashboard} />
+                        <Stack.Screen name="MLGeneratedTimetable" component={MLGenaratedTimeTable} />
                         {/* Add other screens here */}
                         
                         {/* Financial Stress */}

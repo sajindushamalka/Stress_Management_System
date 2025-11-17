@@ -263,7 +263,15 @@ def create_schedule_with_caps(subjects, unavailable, year, month,
     day_slots = {}
     
     # Ignore unavailable dates
-    ignore_dates = set([u["date"] for u in unavailable])
+    # ignore_dates = set([u["date"] for u in unavailable])
+    ignore_dates = set()
+
+    for u in unavailable:
+        if isinstance(u, dict) and "date" in u:
+            ignore_dates.add(u["date"])
+        elif isinstance(u, str):
+            ignore_dates.add(u)
+
     
     # Loop over subjects and allocate sessions
     for s in subjects:
