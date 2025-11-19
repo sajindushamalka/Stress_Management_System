@@ -40,4 +40,4 @@ app.use("/date", DatesBook);
 
 // Financial Route
 import AddIncome from "./router/AddIncome.js";
-app.use("/income", AddIncome);
+app.use("/transaction", AddIncome);

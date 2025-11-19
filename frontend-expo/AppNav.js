@@ -10,6 +10,8 @@ import LectureInfo from "./src/academics_stress/LectureInfo";
 import { AuthContext } from "./src/context/AuthContext";
 import StudyTimeTable from "./src/academics_stress/StudyTimeTable";
 import FinancialDashboard from "./src/financial_stress/FinancialDashboard";
+import SavingPlan from "./src/financial_stress/SavingPlan";
+import ExpensesSection from "./src/financial_stress/ExpensesSection";
 
 const Stack = createNativeStackNavigator();
 
@@ -42,6 +44,8 @@ export default function AppNav() {
                         
                         {/* Financial Stress */}
                         <Stack.Screen name="FinancialDashboard" component={FinancialDashboard}/>
+                        <Stack.Screen name="SavingPlan" component={SavingPlan}/>
+                        <Stack.Screen name="ExpensesSection" component={ExpensesSection} />
                     </>
                 )}
             </Stack.Navigator>

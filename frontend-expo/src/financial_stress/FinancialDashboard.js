@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -7,56 +7,184 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  Alert,
 } from "react-native";
 import Node from "../api/node/Node";
-import { Alert } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { LinearGradient } from "expo-linear-gradient";
 import Header from "../pages/Header";
 import Footer from "../pages/Footer";
-import { FontAwesome6, Ionicons, Foundation } from "@expo/vector-icons";
+import {
+  FontAwesome6,
+  Ionicons,
+  Foundation,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import { AuthContext } from "../context/AuthContext";
+import { useNavigation } from "@react-navigation/native";
 
 const FinancialDashboard = () => {
   const { userDetails } = useContext(AuthContext);
+  const navigation = useNavigation();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [category, setCategory] = useState("");
+  const [type, setType] = useState("");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [events, setEvents] = useState({});
+  const [activeTab, setActiveTab] = useState("All");
+  const [monthlyTransaction, setMonthlyTransaction] = useState(null);
 
-  // Handle Income Add Icon Press
-  const handleAddForm = () => {
+  const deleteData = (item) => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK",
+          onPress: async () => {
+            try {
+              await Node.delete(`/transaction/remove/${item._id}`);
+              console.log("Deleted successfully");
+
+              setEvents((prev) => {
+                const newEvents = { ...prev };
+                newEvents[item.date] = newEvents[item.date].filter(
+                  (i) => i._id !== item._id
+                );
+                return newEvents;
+              });
+            } catch (err) {
+              console.log(err.response?.data || err.message);
+              alert("Something went wrong!");
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  //Fetch monthly total transaction
+  useEffect(() => {
+    Node.get(`/transaction/monthly/${userDetails.RegisterdUser.email}`)
+      .then((res) => {
+        setMonthlyTransaction(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
+
+  // Fetch all transaction events
+  useEffect(() => {
+    Node.get(`/transaction/all/${userDetails.RegisterdUser.email}`)
+      .then((res) => {
+        const formattedEvents = {};
+        res.data.forEach((item) => {
+          if (!formattedEvents[item.date]) formattedEvents[item.date] = [];
+          formattedEvents[item.date].push({
+            _id: item._id,
+            type: item.type,
+            note: item.note,
+            category: item.category,
+            amount: item.amount,
+          });
+        });
+        setEvents(formattedEvents);
+      })
+      .catch((err) => console.log(err));
+  }, []);
+
+  //get monthly balance
+  const validateAndSave = () => {
+    const amt = Number(amount);
+
+    if (!amt || amt <= 0) {
+      Alert.alert("Error", "Please enter a valid amount");
+      return;
+    }
+
+    if (amt > monthlyTransaction?.balance?.total) {
+      Alert.alert("Error", "Amount cannot be greater than your balance");
+      return;
+    }
+
+    // Input is valid → now call the API
+    handleAddTransaction();
+  };
+
+  // Filter events by tab
+  const getFilteredEvents = () => {
+    if (activeTab === "Today") {
+      const today = new Date().toISOString().split("T")[0];
+      return events[today] ? { [today]: events[today] } : {};
+    }
+    return events;
+  };
+
+  // Flatten events for FlatList
+  const filteredEvents = getFilteredEvents();
+  const flatData = [];
+  Object.keys(filteredEvents).forEach((date) => {
+    filteredEvents[date].forEach((item) => {
+      flatData.push({ ...item, date });
+    });
+  });
+
+  const openAddModal = () => {
     setModalVisible(true);
   };
 
-  // Add Income
-  const handleAddIncome = async () => {
-    const today = new Date();
-    const formattedDate = today.toISOString().split("T")[0];
+  const handleAddTransaction = async () => {
+    if (!type || !category || !amount) {
+      Alert.alert("Error", "Please fill all fields.");
+      return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+
     const incomeData = {
-      date: formattedDate,
-      category: category,
-      amount: amount,
-      note: note,
+      date: today,
+      type,
+      category,
+      amount,
+      note,
+      email: userDetails.RegisterdUser.email,
     };
 
     try {
-      const res = await Node.post("/income/add", incomeData);
-     console.log("Backend response:");
- 
+      const res = await Node.post("/transaction/add", incomeData);
+
       if (res.status === 201) {
         Alert.alert("Success", "Income Added Successfully!");
+
         setModalVisible(false);
+        setType("");
         setCategory("");
         setAmount("");
         setNote("");
+
+        // REFRESH EVENTS
+        Node.get(`/transaction/all/${userDetails.RegisterdUser.email}`).then(
+          (res) => {
+            const formatted = {};
+            res.data.forEach((item) => {
+              if (!formatted[item.date]) formatted[item.date] = [];
+              formatted[item.date].push(item);
+            });
+            setEvents(formatted);
+          }
+        );
       } else {
-        Alert.alert("Error", "Backend did not confirm save.");
+        Alert.alert("Error", "Backend error!");
       }
     } catch (error) {
-      console.error("Add Income Error:", error.message);
-      Alert.alert("Error", "Failed to add income. Check console for details.");
+      console.log("ERROR RESPONSE:", error.response?.data);
+      console.log("ERROR MESSAGE:", error.message);
+      Alert.alert("Error", "Failed to add income");
     }
   };
 
@@ -71,11 +199,19 @@ const FinancialDashboard = () => {
 
         {/* Bottom buttons */}
         <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.iconButton} onPress={handleAddForm}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPressIn={() => {
+              openAddModal();
+            }}
+          >
             <Ionicons name="add-circle" size={28} color="#FF8C00" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigation.navigate("SavingPlan")}
+          >
             <FontAwesome6 name="money-check-dollar" size={28} color="#FF8C00" />
           </TouchableOpacity>
 
@@ -83,9 +219,121 @@ const FinancialDashboard = () => {
             <Foundation name="alert" size={28} color="#FF8C00" />
           </TouchableOpacity>
         </View>
+
+        {/* Tabs */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            marginVertical: 10,
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => setActiveTab("All")}
+            style={{
+              padding: 10,
+              borderBottomWidth: activeTab === "All" ? 2 : 0,
+              borderBottomColor: "#FF8C00",
+              marginHorizontal: 5,
+            }}
+          >
+            <Text>All</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setActiveTab("Today")}
+            style={{
+              padding: 10,
+              borderBottomWidth: activeTab === "Today" ? 2 : 0,
+              borderBottomColor: "#FF8C00",
+              marginHorizontal: 5,
+            }}
+          >
+            <Text>Today</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ maxHeight: 150, margin: 10 }}>
+          <ScrollView>
+            {flatData.length === 0 ? (
+              <Text style={{ textAlign: "center", color: "#555" }}>
+                No data added yet.
+              </Text>
+            ) : (
+              flatData.map((item, index) => (
+                <View key={index} style={{ marginVertical: 4 }}>
+                  {activeTab === "All" && (
+                    <Text style={{ fontWeight: "bold" }}>
+                      📅 {item.date} - {item.type.toUpperCase()}
+                    </Text>
+                  )}
+                  <View style={styles.row}>
+                    <Text>
+                      {activeTab === "Today" && `${item.type.toUpperCase()} -`}
+                      {item.category} ({item.note}) - Rs. {item.amount}
+                    </Text>
+                    <TouchableOpacity onPress={() => deleteData(item)}>
+                      <MaterialIcons
+                        name="delete-outline"
+                        size={20}
+                        color="#f95353ff"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )}
+          </ScrollView>
+        </View>
+
+        {/* Monthly Total Transaction Section */}
+        <View style={styles.transactionRow}>
+          {/* Income */}
+          <View style={styles.card}>
+            <Ionicons name="wallet" size={24} color="#f99010ff" />
+            <Text style={styles.cardTitle}>Income</Text>
+            <Text style={styles.cardAmount}>
+              Rs.{monthlyTransaction?.income?.total ?? 0}
+            </Text>
+            <Text style={styles.cardSub}>
+              {monthlyTransaction?.income?.count ?? 0} transactions
+            </Text>
+          </View>
+
+          {/* Monthly Expenses */}
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("ExpensesSection")}
+          >
+            <FontAwesome6
+              name="money-bill-transfer"
+              size={24}
+              color="#f57a74ff"
+            />
+            <Text style={styles.cardTitle}>Expenses</Text>
+
+            <Text style={styles.cardAmountRed}>
+              Rs.{monthlyTransaction?.expense?.total ?? 0}
+            </Text>
+
+            <Text style={styles.cardSub}>
+              {monthlyTransaction?.expense?.count ?? 0} transactions
+            </Text>
+          </TouchableOpacity>
+
+          {/* Monthly Balance */}
+          <View style={styles.card}>
+            <MaterialIcons name="account-balance" size={24} color="#58ce74ff" />
+            <Text style={styles.cardTitle}>Balance</Text>
+
+            <Text style={styles.cardAmountGreen}>
+              Rs.{monthlyTransaction?.balance?.total ?? 0}
+            </Text>
+            <Text style={styles.cardSub}>Updated</Text>
+          </View>
+        </View>
       </ScrollView>
 
-      {/* Modal for Income Adding */}
+      {/* Modal for adding income */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View
           style={{
@@ -104,10 +352,9 @@ const FinancialDashboard = () => {
             }}
           >
             <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
-              Add Income
+              Add Transaction
             </Text>
 
-            {/* Category Picker */}
             <View
               style={{
                 borderWidth: 1,
@@ -118,59 +365,81 @@ const FinancialDashboard = () => {
               }}
             >
               <Picker
-                selectedValue={category}
-                onValueChange={(itemValue) => setCategory(itemValue)}
+                selectedValue={type}
+                onValueChange={(v) => setType(v)}
                 style={{ height: 50, width: "100%" }}
               >
-                <Picker.Item label="Select Category" value="" />
-                <Picker.Item label="Pocket Money" value="Pocket_Money" />
-                <Picker.Item label="Salary" value="Salary" />
-                <Picker.Item label="Other" value="Other" />
+                <Picker.Item label="Select Type" value="" />
+                <Picker.Item label="Income" value="income" />
+                <Picker.Item label="Expenses" value="expense" />
               </Picker>
             </View>
-
-            {/* Amount Field */}
-            <TouchableOpacity
+            {/* Income Categories */}
+            <View
               style={{
                 borderWidth: 1,
                 borderColor: "#ccc",
                 borderRadius: 8,
-                padding: 10,
                 marginBottom: 15,
+                overflow: "hidden",
               }}
             >
-              <TextInput
-                keyboardType="numeric"
-                placeholder="Rs."
-                value={amount}
-                onChangeText={setAmount}
-              />
-            </TouchableOpacity>
+              {type === "income" ? (
+                <Picker
+                  selectedValue={category}
+                  onValueChange={(v) => setCategory(v)}
+                  style={{ height: 50, width: "100%" }}
+                >
+                  <Picker.Item label="Select Category" value="" />
+                  <Picker.Item label="Pocket Money" value="Pocket_Money" />
+                  <Picker.Item label="Salary" value="Salary" />
+                  <Picker.Item label="Other" value="Other" />
+                </Picker>
+              ) : type === "expense" ? (
+                <Picker
+                  selectedValue={category}
+                  onValueChange={(v) => setCategory(v)}
+                  style={{ height: 50, width: "100%" }}
+                >
+                  <Picker.Item label="Select Category" value="" />
+                  <Picker.Item label="Class" value="Class" />
+                  <Picker.Item label="Meal" value="Meal" />
+                  <Picker.Item label="Transport" value="Transport" />
+                  <Picker.Item label="Entertainment" value="Entertainment" />
+                  <Picker.Item label="Boarding" value="Boarding" />
+                  <Picker.Item label="Other" value="Other" />
+                </Picker>
+              ) : (
+                <Picker
+                  selectedValue={category}
+                  onValueChange={(v) => setCategory(v)}
+                  style={{ height: 50, width: "100%" }}
+                >
+                  <Picker.Item label="Select Category" value="" />
+                </Picker>
+              )}
+            </View>
 
-            {/* Note Field */}
-            <TouchableOpacity
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 8,
-                padding: 10,
-                marginBottom: 15,
-              }}
-            >
-              <TextInput
-                value={note}
-                onChangeText={setNote}
-                multiline={true}
-                placeholder="Enter your note here..."
-              />
-            </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              placeholder="Rs."
+              value={amount}
+              onChangeText={setAmount}
+            />
+            <TextInput
+              style={styles.input}
+              value={note}
+              onChangeText={setNote}
+              multiline
+              placeholder="Enter your note here..."
+            />
 
-            {/* Modal buttons */}
             <View
               style={{ flexDirection: "row", justifyContent: "space-between" }}
             >
               <TouchableOpacity
-                onPress={handleAddIncome}
+                onPress={validateAndSave}
                 style={{
                   backgroundColor: "#FF8C00",
                   padding: 10,
@@ -201,21 +470,15 @@ const FinancialDashboard = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 30,
-  },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
+  container: { flex: 1, paddingTop: 30 },
+  contentContainer: { paddingHorizontal: 20, paddingBottom: 100 },
   heading: {
     textAlign: "center",
     fontSize: 28,
     fontWeight: "bold",
     color: "#FF8C00",
     marginBottom: 10,
-    textShadowColor: "rgba(0, 0, 0, 0.2)",
+    textShadowColor: "rgba(0,0,0,0.2)",
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 4,
     paddingTop: 40,
@@ -234,24 +497,73 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
     width: 100,
-    elevation: 3, // adds shadow on Android
+    elevation: 3,
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowOffset: { width: 1, height: 2 },
     shadowRadius: 4,
   },
-  buttonLabel: {
-    marginTop: 5,
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#333",
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 12,
   },
   input: {
     height: 40,
-    margin: 1,
-    marginVertical: 6,
     borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
     padding: 10,
+    marginBottom: 15,
+  },
+  transactionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 15,
+    paddingHorizontal: 5,
+  },
+  card: {
+    backgroundColor: "#fff",
+    width: 112,
+    paddingVertical: 5,
+    borderRadius: 16,
+    alignItems: "center",
+    elevation: 5,
+  },
+
+  cardTitle: {
+    fontSize: 13,
+    marginTop: 5,
+    fontWeight: "600",
+    color: "#444",
+  },
+
+  cardAmount: {
+    fontSize: 15,
+    marginTop: 6,
+    fontWeight: "bold",
+    color: "#FF8C00",
+  },
+
+  cardAmountRed: {
+    fontSize: 15,
+    marginTop: 6,
+    fontWeight: "bold",
+    color: "#FF3B30",
+  },
+
+  cardAmountGreen: {
+    fontSize: 15,
+    marginTop: 6,
+    fontWeight: "bold",
+    color: "#28a745",
+  },
+
+  cardSub: {
+    fontSize: 12,
+    color: "#777",
+    marginTop: 4,
   },
 });
 
