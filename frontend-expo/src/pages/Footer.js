@@ -21,7 +21,7 @@ export default function Footer() {
         paddingRight: 25,
       }}
     >
-      <TouchableOpacity onPress={() => navigation.navigate("PestDashboard")}>
+      <TouchableOpacity onPress={() => navigation.navigate("SocialDashboard")}>
         <FontAwesome
           name="users"
           size={25}

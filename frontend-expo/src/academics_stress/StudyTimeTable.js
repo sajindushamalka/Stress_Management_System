@@ -5,54 +5,36 @@ import {
     View,
     ScrollView,
     TouchableOpacity,
-    Modal,
-    Platform,
-    TextInput
+    TextInput,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { FontAwesome } from "@expo/vector-icons";
-import { Calendar } from "react-native-calendars";
 import { Picker } from "@react-native-picker/picker";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../pages/Header";
 import Footer from "../pages/Footer";
 import { AuthContext } from "../context/AuthContext";
 import Node from "../api/node/Node";
 import Fast from "../api/fast/Fast";
-import axios from "axios";
 
 const StudyTimeTable = () => {
     const { userDetails } = useContext(AuthContext);
     const navigation = useNavigation();
 
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [eventNote, setEventNote] = useState("");
-    const [eventTime, setEventTime] = useState(new Date());
-    const [showTimePicker, setShowTimePicker] = useState(false);
     const [events, setEvents] = useState({});
+    const [myLectures, setMyLectures] = useState([]);
+    const [perDayHours, setPerDayHours] = useState("");
+    const [preferTime, setPreferTime] = useState("");
+    const [valueHas, setValueHas] = useState(false);
 
-    const [startTime, setStartTime] = useState(new Date());
-    const [endTime, setEndTime] = useState(new Date());
-    const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-    const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-
-    const [myLectures, setMyLectures] = useState(['']);
-    const [perDayHours, setPerDayHours] = useState('');
-    const [preferTime, setPreferTime] = useState('');
-    const [sessionLength, setSessionLength] = useState('');
-    const [breakLength, setBreakLength] = useState('');
-    const [weekendStudy, setWeekendStudy] = useState('');
     const today = new Date();
 
-
+    // -------------------------
+    // LOAD EXISTING DATA
+    // -------------------------
     useEffect(() => {
+        // Load unavailable dates
         Node.get(`/date/get/${userDetails.RegisterdUser.email}`)
             .then((res) => {
-                console.log(res.data);
-
-                // Convert response to calendar format
                 const formattedEvents = {};
                 res.data.forEach((item) => {
                     formattedEvents[item.date] = {
@@ -60,10 +42,10 @@ const StudyTimeTable = () => {
                             container: {
                                 backgroundColor:
                                     item.reason === "Lecture"
-                                        ? "#4CAF50" // Green for lectures
+                                        ? "#4CAF50"
                                         : item.reason === "Work"
-                                            ? "#2196F3" // Blue for work
-                                            : "#FF8C00", // Orange default
+                                            ? "#2196F3"
+                                            : "#FF8C00",
                                 borderRadius: 8,
                             },
                             text: {
@@ -74,370 +56,108 @@ const StudyTimeTable = () => {
                         note: `${item.reason} (${item.time})`,
                     };
                 });
-
                 setEvents(formattedEvents);
             })
-            .catch((err) => {
-                console.log(err);
-            });
+            .catch((err) => console.log(err));
 
-        Node.get(`/lecture/get/${userDetails.RegisterdUser.email}`).then((res) => {
-            console.log(res.data)
-            setMyLectures(res.data || []);
-        }).catch((err) => {
-            console.log(err)
-        })
+        // Load lectures
+        Node.get(`/lecture/get/${userDetails.RegisterdUser.email}`)
+            .then((res) => setMyLectures(res.data || []))
+            .catch((err) => console.log(err));
 
+        // Check if timetable already exists
+        Node.get(`/timetable/get/${userDetails.RegisterdUser.email}`)
+            .then((res) => {
+                if (res.data && res.data.schedule && res.data.schedule.length > 0) {
+                    setValueHas(true);
+                }
+            })
+            .catch(() => setValueHas(false));
     }, []);
 
+    // -------------------------
+    // PREDICT MODEL
+    // -------------------------
+    const predictModel = () => {
+        if (!perDayHours || !preferTime) {
+            alert("Please fill all the fields.");
+            return;
+        }
 
-    const predictModel = async () => {
         const payload = {
             subjects: myLectures,
             unavailable: events,
             study_hours_per_day: perDayHours,
             preferred_window: preferTime,
-            year: today.getFullYear(),           // Current year, e.g., 2025
-            month: today.getMonth() + 1
-        }
-
-        console.log(payload)
-
-        axios.post('http://192.168.1.45:8086/generate_timetable', payload).then((res) => {
-            console.log(res.data)
-        }).catch((err) => {
-            console.log(err)
-        })
-
-        // const payload = {
-        //     subjects: myLectures,
-        //     unavailable: events,
-        //     study_hours_per_day: perDayHours,
-        //     preferred_window: preferTime,
-        //     year: today.getFullYear(),
-        //     month: today.getMonth() + 1
-        // };
-        // console.log(payload)
-
-        // try {
-        //     const response = await fetch("http://192.168.1.45:5005/generate_timetable", {
-        //         method: "POST",
-        //         headers: {
-        //             "Content-Type": "application/json", // important
-        //         },
-        //         body: JSON.stringify(payload), // convert JS object to JSON string
-        //     });
-
-        //     const data = await response.json();
-        //     console.log(data);
-        // } catch (error) {
-        //     console.error(error);
-        // }
-
-        // const today = new Date();
-        // const payload = {
-        //     subjects: myLectures,
-        //     unavailable: events,
-        //     study_hours_per_day: perDayHours,
-        //     preferred_window: preferTime,
-        //     year: today.getFullYear(),
-        //     month: today.getMonth() + 1
-        // };
-
-        // try {
-        //     const response = await fetch("http://192.168.1.45:5005/generate_timetable", {
-        //         method: "POST",
-        //         headers: { "Content-Type": "application/json" },
-        //         body: JSON.stringify(payload),
-        //     });
-
-        //     const data = await response.json();
-        //     console.log(data);
-        // } catch (error) {
-        //     console.log(error);
-        // }
-
-    }
-
-
-
-    // Handle day press
-    const handleDayPress = (day) => {
-        setSelectedDate(day.dateString);
-        setModalVisible(true);
-    };
-
-    // Add event to calendar
-    const handleAddEvent = () => {
-        if (!selectedDate || !eventNote) return;
-
-        const updatedEvents = {
-            ...events,
-            [selectedDate]: {
-                marked: true,
-                customStyles: {
-                    container: { backgroundColor: "#ffe6b3" },
-                    text: { color: "#d35400", fontWeight: "bold" },
-                },
-                note: `${eventNote} (${startTime.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                })} - ${endTime.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                })})`,
-
-            },
+            year: today.getFullYear(),
+            month: today.getMonth() + 1,
         };
 
-        const ob = {
-            date: selectedDate,
-            reason: eventNote,
-            time: ` ${startTime.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-            })} - ${endTime.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-            })}`,
-            email: userDetails.RegisterdUser.email
-        }
+        Fast.post("/generate_timetable", payload)
+            .then((res) => {
+                const body = {
+                    per_subject_sessions: res.data.per_subject_sessions,
+                    schedule: res.data.schedule,
+                    owner_email: userDetails.RegisterdUser.email,
+                };
 
-        Node.post('/date/add', ob).then((res) => {
-            console.log(res.data)
-        }).catch((err) => {
-            console.log(err)
-        })
-
-        setEvents(updatedEvents);
-        setModalVisible(false);
-        setEventNote("");
-        setEventTime(new Date());
+                Node.post("/timetable/add", body)
+                    .then(() => {
+                        alert("Timetable saved successfully!");
+                        setValueHas(true);
+                    })
+                    .catch((err) => console.log(err));
+            })
+            .catch((err) => console.log(err));
     };
 
     return (
-        <LinearGradient colors={["#ffffffff", "#f3ddc3ff"]} style={styles.container}>
+        <LinearGradient colors={["#ffffff", "#f3ddc3"]} style={styles.container}>
             <Header />
 
             <ScrollView contentContainerStyle={styles.contentContainer}>
                 <Text style={styles.heading}>Study Timetable</Text>
 
-                {/* <Calendar
-                    markingType={"custom"}
-                    markedDates={events}
-                    onDayPress={handleDayPress}
-                    theme={{
-                        calendarBackground: "white",
-                        textSectionTitleColor: "#2E3A59",
-                        todayTextColor: "#f57c00",
-                        dayTextColor: "#2E3A59",
-                        arrowColor: "#f57c00",
-                        monthTextColor: "#f57c00",
-                    }}
-                    style={{ borderRadius: 10, margin: 10, elevation: 3 }}
-                /> */}
-                <Text style={{ textAlign: 'center' }}>----------------------</Text>
-                <Text style={styles.descriptionText}>
-                    30 minutes Game, then take a 15-minute break. Build your ML predictive timetable for this month!
-                </Text>
-                <ScrollView
-                    contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 20 }}
-                    showsVerticalScrollIndicator={true}
-                >
-                    <Text style={styles.dropdownLabel}>
-                        How many hours can you study per day this month?
+                {valueHas && (
+                    <Text style={styles.existingText}>
+                        ✔ You already have a generated timetable
                     </Text>
-                    <TextInput
-                        placeholder="Hours"
-                        style={styles.input}
-                        onChangeText={(text) => setPerDayHours(text)}
-                    />
+                )}
 
-                    {/* Preferred Study Time */}
-                    <View style={styles.dropdownContainer}>
-                        <Text style={styles.dropdownLabel}>What time do you prefer to study?</Text>
-                        <View style={styles.pickerWrapper}>
-                            <Picker
-                                selectedValue={preferTime}        // <-- Make it controlled
-                                onValueChange={(itemValue) => setPreferTime(itemValue)}
-                                style={styles.picker}
-                            >
-                                <Picker.Item label="Select" value="" />
-                                <Picker.Item label="Morning" value="morning" />
-                                <Picker.Item label="Afternoon" value="afternoon" />
-                                <Picker.Item label="Night" value="night" />
-                                <Picker.Item label="Flexible" value="flexible" />
-                            </Picker>
-                        </View>
-                    </View>
+                <Text style={styles.descriptionText}>
+                    30 minutes study, 15 minutes break. Build your ML-generated timetable!
+                </Text>
 
+                {/* Input: hours per day */}
+                <Text style={styles.label}>Study hours per day</Text>
+                <TextInput
+                    placeholder="Enter hours"
+                    keyboardType="numeric"
+                    value={perDayHours}
+                    onChangeText={setPerDayHours}
+                    style={styles.input}
+                />
 
-                    {/* Predict Button */}
-                    <TouchableOpacity
-                        style={[styles.modalButton, { backgroundColor: "#FF8C00" }]}
-                        onPress={predictModel}
+                {/* Picker */}
+                <Text style={styles.label}>Preferred study time</Text>
+                <View style={styles.pickerWrapper}>
+                    <Picker
+                        selectedValue={preferTime}
+                        onValueChange={(v) => setPreferTime(v)}
+                        style={styles.picker}
                     >
-                        <Text style={styles.buttonText}>Predict</Text>
-                    </TouchableOpacity>
-                </ScrollView>
-
-                {/* Display all events below calendar */}
-                <View style={{ margin: 10 }}>
-                    {Object.keys(events).length === 0 && (
-                        <Text style={{ textAlign: "center", color: "#555" }}>No events added yet.</Text>
-                    )}
-                    {Object.keys(events).map((date) => (
-                        <Text key={date} style={styles.eventNote}>
-                            📅 {date} → {events[date].note}
-                        </Text>
-                    ))}
+                        <Picker.Item label="Select" value="" />
+                        <Picker.Item label="Morning" value="morning" />
+                        <Picker.Item label="Afternoon" value="afternoon" />
+                        <Picker.Item label="Night" value="night" />
+                        <Picker.Item label="Flexible" value="flexible" />
+                    </Picker>
                 </View>
 
-                {/* Bottom buttons */}
-                {/* <View style={styles.buttonRow}>
-                    <TouchableOpacity
-                        style={styles.iconButton}
-                        onPress={() => navigation.navigate("LectureInfo")}
-                    >
-                        <FontAwesome name="video-camera" size={28} color="#FF8C00" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.iconButton}>
-                        <FontAwesome name="book" size={28} color="#FF8C00" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.iconButton}>
-                        <FontAwesome name="calendar" size={28} color="#FF8C00" />
-                    </TouchableOpacity>
-                </View> */}
+                <TouchableOpacity style={styles.button} onPress={predictModel}>
+                    <Text style={styles.buttonText}>Generate Timetable</Text>
+                </TouchableOpacity>
             </ScrollView>
-
-            {/* Modal for adding events */}
-            {/* <Modal visible={modalVisible} transparent animationType="slide">
-                <View
-                    style={{
-                        flex: 1,
-                        backgroundColor: "rgba(0,0,0,0.5)",
-                        justifyContent: "center",
-                        alignItems: "center",
-                    }}
-                >
-                    <View
-                        style={{
-                            backgroundColor: "white",
-                            padding: 20,
-                            borderRadius: 10,
-                            width: "80%",
-                        }}
-                    >
-                        <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
-                            Add Event for {selectedDate}
-                        </Text>
-
-                        <View
-                            style={{
-                                borderWidth: 1,
-                                borderColor: "#ccc",
-                                borderRadius: 8,
-                                marginBottom: 15,
-                                overflow: "hidden",
-                            }}
-                        >
-                            <Picker
-                                selectedValue={eventNote}
-                                onValueChange={(itemValue) => setEventNote(itemValue)}
-                                style={{ height: 150, width: "100%" }}
-                            >
-                                <Picker.Item label="Select Reason" value="" />
-                                <Picker.Item label="Lecture" value="Lecture" />
-                                <Picker.Item label="Assignment" value="Assignment" />
-                                <Picker.Item label="Work" value="Work" />
-                                <Picker.Item label="Class" value="Class" />
-                                <Picker.Item label="Entertainment" value="Entertainment" />
-                                <Picker.Item label="Other" value="Other" />
-                            </Picker>
-                        </View>
-
-                        <TouchableOpacity
-                            onPress={() => setShowStartTimePicker(true)}
-                            style={{
-                                borderWidth: 1,
-                                borderColor: "#ccc",
-                                borderRadius: 8,
-                                padding: 10,
-                                marginBottom: 15,
-                            }}
-                        >
-                            <Text>
-                                Start Time:{" "}
-                                {startTime
-                                    ? startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                                    : "Select Start Time"}
-                            </Text>
-                        </TouchableOpacity>
-
-                        {showStartTimePicker && (
-                            <DateTimePicker
-                                value={startTime || new Date()}
-                                mode="time"
-                                display="default"
-                                onChange={(event, selectedTime) => {
-                                    setShowStartTimePicker(false);
-                                    if (selectedTime) setStartTime(selectedTime);
-                                }}
-                            />
-                        )}
-
-                        <TouchableOpacity
-                            onPress={() => setShowEndTimePicker(true)}
-                            style={{
-                                borderWidth: 1,
-                                borderColor: "#ccc",
-                                borderRadius: 8,
-                                padding: 10,
-                                marginBottom: 15,
-                                marginTop: 5
-                            }}
-                        >
-                            <Text>
-                                End Time:{" "}
-                                {endTime
-                                    ? endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                                    : "Select End Time"}
-                            </Text>
-                        </TouchableOpacity>
-
-                        {showEndTimePicker && (
-                            <DateTimePicker
-                                value={endTime || new Date()}
-                                mode="time"
-                                display="default"
-                                onChange={(event, selectedTime) => {
-                                    setShowEndTimePicker(false);
-                                    if (selectedTime) setEndTime(selectedTime);
-                                }}
-                            />
-                        )}
-
-
-                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                            <TouchableOpacity
-                                onPress={handleAddEvent}
-                                style={{ backgroundColor: "#FF8C00", padding: 10, borderRadius: 8 }}
-                            >
-                                <Text style={{ color: "white", fontWeight: "bold" }}>Save</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                onPress={() => setModalVisible(false)}
-                                style={{ backgroundColor: "#aaa", padding: 10, borderRadius: 8 }}
-                            >
-                                <Text style={{ color: "white" }}>Cancel</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal> */}
 
             <Footer />
         </LinearGradient>
@@ -459,149 +179,53 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#FF8C00",
         marginBottom: 10,
-        textShadowColor: "rgba(0, 0, 0, 0.2)",
-        textShadowOffset: { width: 2, height: 2 },
-        textShadowRadius: 4,
-        paddingTop: 40
+        paddingTop: 20,
     },
-    description: {
+    existingText: {
         textAlign: "center",
+        color: "#4CAF50",
         fontSize: 16,
-        color: "#000000ff",
-        marginVertical: 15,
-        lineHeight: 22,
-        backgroundColor: "rgba(255, 255, 255, 0.8)",
-        padding: 10,
-        borderRadius: 8,
+        fontWeight: "600",
+        marginBottom: 15,
     },
-    image: {
-        width: "100%",
-        height: 200,
-        resizeMode: "cover",
-        borderRadius: 10,
-        marginVertical: 20,
-        borderWidth: 1,
-        borderColor: "#004d40",
-        shadowColor: "#000",
-        shadowOffset: { width: 2, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-    },
-    sectionTitle: {
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#FF8C00",
-        marginVertical: 15,
-    },
-    featureCard: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "#fcc47eff",
-        padding: 12,
-        borderRadius: 10,
-        marginVertical: 8,
-        shadowColor: "#000",
-        shadowOffset: { width: 1, height: 3 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-    },
-    featureIcon: {
-        fontSize: 28,
-        marginRight: 10,
-        color: "#00796b",
-    },
-    featureText: {
-        fontSize: 16,
-        color: "white",
-        flex: 1,
-        lineHeight: 22,
-    },
-    boldText: {
-        fontWeight: "bold",
-        color: "white",
-    },
-    finalNote: {
+    descriptionText: {
+        fontSize: 15,
+        color: "#666",
         textAlign: "center",
-        fontSize: 16,
-        color: "#FF8C00",
-        marginTop: 20,
-        lineHeight: 24,
-        fontStyle: "italic",
-        padding: 15,
-        backgroundColor: "rgba(255, 255, 255, 0.9)",
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: "#FF8C00",
+        marginBottom: 25,
     },
-    buttonRow: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        alignItems: "center",
-        marginTop: 20,
-        paddingVertical: 10,
-    },
-
-    iconButton: {
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 10,
-        width: 100,
-        elevation: 3, // adds shadow on Android
-        shadowColor: "#000",
-        shadowOpacity: 0.2,
-        shadowOffset: { width: 1, height: 2 },
-        shadowRadius: 4,
-    },
-
-    buttonLabel: {
-        marginTop: 5,
-        fontSize: 14,
-        fontWeight: "bold",
+    label: {
+        fontWeight: "600",
         color: "#333",
+        marginBottom: 5,
     },
     input: {
         borderWidth: 1,
-        borderColor: "#ccc",
+        borderColor: "#bbb",
         borderRadius: 8,
         padding: 10,
-        marginBottom: 10,
-    },
-    dropdownContainer: {
-        marginBottom: 15,
-    },
-    dropdownLabel: {
-        fontWeight: "600",
-        color: "#c0c0c0ff",
-        marginBottom: 5,
+        marginBottom: 20,
     },
     pickerWrapper: {
         borderWidth: 1,
-        borderColor: "#ccc",
+        borderColor: "#bbb",
         borderRadius: 8,
-        overflow: "hidden",
-    },
-    descriptionText: {
-        fontSize: 16,
-        fontWeight: "500",
-        color: "#7a7979ff",
-        marginBottom: 30,
-        marginTop: 5,
-        textAlign: 'center'
+        marginBottom: 20,
     },
     picker: {
         height: 150,
+        width: "100%",
     },
-    modalButton: {
-        flex: 1,
-        padding: 10,
-        borderRadius: 8,
-        marginHorizontal: 5,
+    button: {
+        backgroundColor: "#FF8C00",
+        padding: 15,
+        borderRadius: 10,
         alignItems: "center",
+        marginTop: 10,
     },
     buttonText: {
         color: "white",
+        fontSize: 16,
         fontWeight: "bold",
     },
 });

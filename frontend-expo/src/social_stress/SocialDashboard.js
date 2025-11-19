@@ -19,7 +19,7 @@ import Footer from "../pages/Footer";
 import { AuthContext } from "../context/AuthContext";
 import Node from "../api/node/Node";
 
-const AcademicsDashboard = () => {
+const ScoialDashboard = () => {
     const { userDetails } = useContext(AuthContext);
     const navigation = useNavigation();
 
@@ -131,23 +131,9 @@ const AcademicsDashboard = () => {
             <Header />
 
             <ScrollView contentContainerStyle={styles.contentContainer}>
-                <Text style={styles.heading}>Academic Stress</Text>
+                <Text style={styles.heading}>Social Monitor</Text>
 
-                <Calendar
-                    markingType={"custom"}
-                    markedDates={events}
-                    onDayPress={handleDayPress}
-                    theme={{
-                        calendarBackground: "white",
-                        textSectionTitleColor: "#2E3A59",
-                        todayTextColor: "#f57c00",
-                        dayTextColor: "#2E3A59",
-                        arrowColor: "#f57c00",
-                        monthTextColor: "#f57c00",
-                    }}
-                    style={{ borderRadius: 10, margin: 10, elevation: 3 }}
-                />
-
+               
                 {/* Display all events below calendar */}
                 <View style={{ margin: 10 }}>
                     {Object.keys(events).length === 0 && (
@@ -164,14 +150,12 @@ const AcademicsDashboard = () => {
                 <View style={styles.buttonRow}>
                     <TouchableOpacity
                         style={styles.iconButton}
-                        onPress={() => navigation.navigate("LectureInfo")}
+                        onPress={() => navigation.navigate("FriendDashboard")}
                     >
-                        <FontAwesome name="video-camera" size={28} color="#FF8C00" />
+                        <FontAwesome name="user" size={28} color="#FF8C00" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity 
-                    style={styles.iconButton}
-                    onPress={() => navigation.navigate("MLGeneratedTimetable")}>
+                    <TouchableOpacity style={styles.iconButton}>
                         <FontAwesome name="book" size={28} color="#FF8C00" />
                     </TouchableOpacity>
 
@@ -440,4 +424,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default AcademicsDashboard;
+export default ScoialDashboard;
