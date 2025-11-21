@@ -45,3 +45,5 @@ app.use("/timetable", SavedTimetable);
 // Financial Route
 import AddIncome from "./router/AddIncome.js";
 app.use("/transaction", AddIncome);
+import SavingPlan from "./router/SavingPlan.js";
+app.use("/saving", SavingPlan);

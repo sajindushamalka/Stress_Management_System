@@ -36,7 +36,16 @@ const FinancialDashboard = () => {
   const [activeTab, setActiveTab] = useState("All");
   const [monthlyTransaction, setMonthlyTransaction] = useState(null);
 
+  const monthName = new Date().toLocaleString("en-US", { month: "long" });
+
+  const [deletingId, setDeletingId] = useState(null);
+
   const deleteData = (item) => {
+    if (!item || !item._id) {
+      Alert.alert("Error", "Invalid item selected for deletion.");
+      return;
+    }
+
     Alert.alert(
       "Confirm Delete",
       "Are you sure you want to delete?",
@@ -45,20 +54,52 @@ const FinancialDashboard = () => {
         {
           text: "OK",
           onPress: async () => {
+            setDeletingId(item._id);
             try {
-              await Node.delete(`/transaction/remove/${item._id}`);
-              console.log("Deleted successfully");
+              const response = await Node.delete(
+                `/transaction/remove/${item._id}`
+              );
+
+              console.log("Delete response:", response?.data ?? response);
 
               setEvents((prev) => {
-                const newEvents = { ...prev };
-                newEvents[item.date] = newEvents[item.date].filter(
-                  (i) => i._id !== item._id
-                );
-                return newEvents;
+                if (!prev) return prev;
+                const updated = { ...prev };
+                const listForDate = Array.isArray(updated[item.date])
+                  ? updated[item.date].filter((i) => i._id !== item._id)
+                  : [];
+
+                if (listForDate.length === 0) {
+                  delete updated[item.date];
+                } else {
+                  updated[item.date] = listForDate;
+                }
+                return updated;
               });
+
+              Node.get(
+                `/transaction/all/${userDetails.RegisterdUser.email}`
+              ).then((res) => {
+                const formatted = {};
+                res.data.forEach((item) => {
+                  if (!formatted[item.date]) formatted[item.date] = [];
+                  formatted[item.date].push(item);
+                });
+                fetchMonthlySummary();
+                setEvents(formatted);
+              });
+
+              Alert.alert("Success", "Deleted successfully");
             } catch (err) {
-              console.log(err.response?.data || err.message);
-              alert("Something went wrong!");
+              const serverMsg =
+                err?.response?.data?.message ||
+                err?.response?.data ||
+                err?.message ||
+                "Unknown error";
+
+              Alert.alert("Delete Failed", String(serverMsg));
+            } finally {
+              setDeletingId(null);
             }
           },
         },
@@ -68,14 +109,18 @@ const FinancialDashboard = () => {
   };
 
   //Fetch monthly total transaction
+  const fetchMonthlySummary = async () => {
+    try {
+      const res = await Node.get(
+        `/transaction/monthly/${userDetails.RegisterdUser.email}`
+      );
+      setMonthlyTransaction(res.data);
+    } catch (err) {
+      console.log("Summary fetch error:", err);
+    }
+  };
   useEffect(() => {
-    Node.get(`/transaction/monthly/${userDetails.RegisterdUser.email}`)
-      .then((res) => {
-        setMonthlyTransaction(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    fetchMonthlySummary();
   }, []);
 
   // Fetch all transaction events
@@ -107,12 +152,12 @@ const FinancialDashboard = () => {
       return;
     }
 
-    if (amt > monthlyTransaction?.balance?.total) {
-      Alert.alert("Error", "Amount cannot be greater than your balance");
-      return;
+    if (type === "expense") {
+      if (amt > monthlyTransaction?.balance?.total) {
+        Alert.alert("Error", "Amount cannot be greater than your balance");
+        return;
+      }
     }
-
-    // Input is valid → now call the API
     handleAddTransaction();
   };
 
@@ -145,7 +190,6 @@ const FinancialDashboard = () => {
     }
 
     const today = new Date().toISOString().split("T")[0];
-
     const incomeData = {
       date: today,
       type,
@@ -154,7 +198,6 @@ const FinancialDashboard = () => {
       note,
       email: userDetails.RegisterdUser.email,
     };
-
     try {
       const res = await Node.post("/transaction/add", incomeData);
 
@@ -167,7 +210,6 @@ const FinancialDashboard = () => {
         setAmount("");
         setNote("");
 
-        // REFRESH EVENTS
         Node.get(`/transaction/all/${userDetails.RegisterdUser.email}`).then(
           (res) => {
             const formatted = {};
@@ -175,6 +217,7 @@ const FinancialDashboard = () => {
               if (!formatted[item.date]) formatted[item.date] = [];
               formatted[item.date].push(item);
             });
+            fetchMonthlySummary();
             setEvents(formatted);
           }
         );
@@ -182,7 +225,6 @@ const FinancialDashboard = () => {
         Alert.alert("Error", "Backend error!");
       }
     } catch (error) {
-      console.log("ERROR RESPONSE:", error.response?.data);
       console.log("ERROR MESSAGE:", error.message);
       Alert.alert("Error", "Failed to add income");
     }
@@ -215,7 +257,8 @@ const FinancialDashboard = () => {
             <FontAwesome6 name="money-check-dollar" size={28} color="#FF8C00" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity style={styles.iconButton}
+          onPress={() => navigation.navigate("FinanceNotification")}>
             <Foundation name="alert" size={28} color="#FF8C00" />
           </TouchableOpacity>
         </View>
@@ -252,7 +295,7 @@ const FinancialDashboard = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={{ maxHeight: 150, margin: 10 }}>
+        <View style={{ maxHeight: 250, margin: 10 }}>
           <ScrollView>
             {flatData.length === 0 ? (
               <Text style={{ textAlign: "center", color: "#555" }}>
@@ -284,8 +327,9 @@ const FinancialDashboard = () => {
             )}
           </ScrollView>
         </View>
-
+        
         {/* Monthly Total Transaction Section */}
+        <Text style={styles.sectionHeading}>{monthName } Summary</Text>
         <View style={styles.transactionRow}>
           {/* Income */}
           <View style={styles.card}>
@@ -402,11 +446,19 @@ const FinancialDashboard = () => {
                   style={{ height: 50, width: "100%" }}
                 >
                   <Picker.Item label="Select Category" value="" />
-                  <Picker.Item label="Class" value="Class" />
-                  <Picker.Item label="Meal" value="Meal" />
+                  <Picker.Item
+                    label="Tuition & Academic Fees"
+                    value="Tuition & Academic Fees"
+                  />
+                  <Picker.Item label="Food & Meals" value="Food & Meals" />
                   <Picker.Item label="Transport" value="Transport" />
                   <Picker.Item label="Entertainment" value="Entertainment" />
-                  <Picker.Item label="Boarding" value="Boarding" />
+                  <Picker.Item label="Shopping" value="Shopping" />
+                  <Picker.Item label="Accommodation" value="Accommodation" />
+                  <Picker.Item
+                    label="Health & Fitness"
+                    value="Health & Fitness"
+                  />
                   <Picker.Item label="Other" value="Other" />
                 </Picker>
               ) : (
@@ -482,6 +534,13 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 4,
     paddingTop: 40,
+  },
+  sectionHeading: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#000000ff",
+    marginTop: 7,
+    paddingHorizontal: 10,
   },
   buttonRow: {
     flexDirection: "row",

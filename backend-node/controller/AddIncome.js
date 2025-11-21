@@ -3,13 +3,11 @@ import TransactionType from "../enum/TransactionType.js";
 
 export const AddNewTransaction = async (req, res) => {
   try {
-    // extract required fields
     const { type, email, amount, date, category, note } = req.body;
 
     if (!Object.values(TransactionType).includes(type)) {
       return res.status(400).json({ message: "Invalid transaction type" });
     }
-    // save new transaction
     const newVol = new AddIncome({
       date,
       type,
@@ -25,7 +23,6 @@ export const AddNewTransaction = async (req, res) => {
       message: "Transaction Added Successfully..!",
       payload: saved,
     });
-
   } catch (error) {
     console.error("AddNewTransaction Error:", error);
     res.status(500).json({
@@ -34,7 +31,6 @@ export const AddNewTransaction = async (req, res) => {
     });
   }
 };
-
 
 // Get all incomes, expenses and balance by mail
 export const GetAllIncomeByEmail = async (req, res) => {
@@ -102,9 +98,9 @@ export const MonthlySummaryCal = async (req, res) => {
         total: totalExpense,
         count: expenses.length,
       },
-      balance : {
-        total : totalIncome - totalExpense,
-      }
+      balance: {
+        total: totalIncome - totalExpense,
+      },
     });
   } catch (error) {
     console.error("Monthly Summary Error:", error);
@@ -123,12 +119,28 @@ export const DeleteIncome = async (req, res) => {
     const deleted = await AddIncome.findByIdAndDelete(id);
 
     if (!deleted) {
-      return res.status(404).json({ message: "Income not found" });
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    let revertAmount = Number(deleted.amount);
+    let revertType = deleted.type;
+
+    let adjustment = 0;
+
+    if (revertType === "income") {
+      adjustment = -revertAmount;
+    } else if (revertType === "expense") {
+      adjustment = +revertAmount;
     }
 
     res.status(200).json({
-      message: "Income deleted successfully",
+      message: "Transaction deleted successfully",
       payload: deleted,
+      revert: {
+        type: revertType,
+        amount: revertAmount,
+        adjustment: adjustment,
+      },
     });
   } catch (error) {
     console.error("DeleteIncome Error:", error);
@@ -138,3 +150,59 @@ export const DeleteIncome = async (req, res) => {
     });
   }
 };
+
+// Get Weekly Expenses Category-wise (Auto Week Calculation)
+export const WeeklyExpenseCategory = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    // Auto calculate last 7 days
+    const today = new Date();
+    const lastWeek = new Date();
+    lastWeek.setDate(today.getDate() - 7);
+
+    const startDate = lastWeek.toISOString().split("T")[0];
+    const endDate = today.toISOString().split("T")[0];
+
+    // Fetch expenses for the auto-calculated week
+    const expenses = await AddIncome.find({
+      email,
+      type: "expense",
+      date: { $gte: startDate, $lte: endDate },
+    });
+
+    // If no data
+    if (expenses.length === 0) {
+      return res.status(200).json({
+        summary: {},
+        message: "No expenses for this week.",
+      });
+    }
+
+    // Group category-wise
+    const summary = {};
+
+    expenses.forEach((item) => {
+      if (!summary[item.category]) {
+        summary[item.category] = {
+          totalAmount: 0,
+          transactions: 0,
+        };
+      }
+
+      summary[item.category].totalAmount += Number(item.amount);
+      summary[item.category].transactions += 1;
+    });
+
+    // Return only summary without date range
+    res.status(200).json(summary);
+
+  } catch (error) {
+    console.error("WeeklyExpenseCategory Error:", error);
+    res.status(500).json({
+      message: "Failed to fetch weekly expense summary",
+      error: error.message,
+    });
+  }
+};
+
