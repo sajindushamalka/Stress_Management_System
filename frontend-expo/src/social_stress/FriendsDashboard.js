@@ -22,57 +22,51 @@ const FriendDashboard = () => {
     const [allUsers, setAllUsers] = useState([]);
     const [mySentRequests, setMySentRequests] = useState([]);
     const [receivedRequests, setReceivedRequests] = useState([]);
-
-    // useEffect(() => {
-
-    //     // Get all users
-    //     Node.get("/user/all")
-    //         .then((res) => setAllUsers(res.data))
-    //         .catch((err) => console.log(err));
-
-    //     // Get all friend requests for logged-in user
-    //     Node.get(`/friend/get`)
-    //         .then((res) => {
-    //             setMySentRequests(res.data.filter((x) => x.sender === userDetails.RegisterdUser.email));
-    //             setReceivedRequests(res.data.filter((x) => x.receiver === userDetails.RegisterdUser.email));
-    //         })
-    //         .catch((err) => console.log(err));
-
-    // }, []);
+    const [myFriends, setMyFriends] = useState([]);
 
     useEffect(() => {
-        // Get all users
+        const myEmail = userDetails.RegisterdUser.email;
+
         Node.get("/user/all")
             .then((res) => {
                 const users = res.data;
-                const myEmail = userDetails.RegisterdUser.email;
 
-                // Now fetch friend request data
                 Node.get("/friend/get")
                     .then((res2) => {
                         const allRequests = res2.data;
 
                         const mySent = allRequests.filter(
-                            (x) => x.sender === myEmail
+                            (x) => x.sender === myEmail && x.status === "Requested"
                         );
 
                         const myReceived = allRequests.filter(
-                            (x) => x.receiver === myEmail
+                            (x) => x.receiver === myEmail && x.status === "Requested"
+                        );
+
+                        const connectedFriends = allRequests.filter(
+                            (x) =>
+                                (x.sender === myEmail || x.receiver === myEmail) &&
+                                x.status === "Connected"
                         );
 
                         setMySentRequests(mySent);
                         setReceivedRequests(myReceived);
+                        setMyFriends(connectedFriends);
 
-                        // Email lists to remove
                         const sentEmails = mySent.map((x) => x.receiver);
                         const receivedEmails = myReceived.map((x) => x.sender);
 
-                        // FINAL FILTERED USERS
+                        // 🔥 FIX: REMOVE FRIEND LIST USERS FROM FIND TAB
+                        const friendsEmails = connectedFriends.map((x) =>
+                            x.sender === myEmail ? x.receiver : x.sender
+                        );
+
                         const filteredUsers = users.filter(
                             (u) =>
-                                u.email !== myEmail &&               // remove me
-                                !sentEmails.includes(u.email) &&     // remove I already sent requests to
-                                !receivedEmails.includes(u.email)    // remove people who sent requests to me
+                                u.email !== myEmail &&
+                                !sentEmails.includes(u.email) &&
+                                !receivedEmails.includes(u.email) &&
+                                !friendsEmails.includes(u.email)
                         );
 
                         setAllUsers(filteredUsers);
@@ -82,14 +76,13 @@ const FriendDashboard = () => {
             .catch((err) => console.log(err));
     }, []);
 
-
     const requestFriend = (email, fullName) => {
         const payload = {
             sender: userDetails.RegisterdUser.email,
             receiver: email,
             status: "Requested",
             sender_fullname: userDetails.RegisterdUser.full_name,
-            receiver_fullname: fullName
+            receiver_fullname: fullName,
         };
         Node.post("/friend/add", payload)
             .then((res) => console.log("Friend Request Sent:", res.data))
@@ -97,30 +90,27 @@ const FriendDashboard = () => {
     };
 
     const acceptFriend = (id) => {
-        Node.put(`/friend/accept/${id}`)
+        Node.put(`/friend/update/${id}`)
             .then((res) => console.log("Friend Accepted:", res.data))
             .catch((err) => console.log(err));
     };
 
     const removeFriendRequest = (id) => {
         Node.delete(`/friend/remove/${id}`)
-            .then((res) => console.log("Friend Request Removed"))
+            .then(() => console.log("Friend Request Removed"))
             .catch((err) => console.log(err));
     };
 
-    // 🔥 Tab content generator
+
     const renderList = () => {
         let listData = [];
 
-        if (activeTab === "find") {
-            listData = allUsers;
-        }
-        if (activeTab === "myRequests") {
-            listData = mySentRequests;
-        }
-        if (activeTab === "newRequests") {
-            listData = receivedRequests;
-        }
+        if (activeTab === "find") listData = allUsers;
+        if (activeTab === "myRequests") listData = mySentRequests;
+        if (activeTab === "newRequests") listData = receivedRequests;
+        if (activeTab === "friends") listData = myFriends;
+
+        const myEmail = userDetails.RegisterdUser.email;
 
         return listData.map((item) => (
             <View key={item._id} style={styles.friendCard}>
@@ -137,15 +127,23 @@ const FriendDashboard = () => {
                             ? item.full_name
                             : activeTab === "myRequests"
                                 ? item.receiver_fullname
-                                : item.sender_fullname}
+                                : activeTab === "newRequests"
+                                    ? item.sender_fullname
+                                    : item.sender === myEmail
+                                        ? item.receiver_fullname
+                                        : item.sender_fullname}
                     </Text>
 
                     <Text style={styles.friendEmail}>
-                        {activeTab === "find"
-                            ? item.email
-                            : activeTab === "myRequests"
+                        {activeTab === "friends"
+                            ? item.sender === myEmail
                                 ? item.receiver
-                                : item.sender}
+                                : item.sender
+                            : activeTab === "find"
+                                ? item.email
+                                : activeTab === "myRequests"
+                                    ? item.receiver
+                                    : item.sender}
                     </Text>
                 </View>
 
@@ -183,36 +181,33 @@ const FriendDashboard = () => {
         <LinearGradient colors={["#fff", "#f3ddc3"]} style={styles.container}>
             <Header />
 
-            {/* 🔥 TAB SWITCHER */}
             <View style={styles.tabRow}>
                 <TouchableOpacity
                     onPress={() => setActiveTab("find")}
-                    style={[
-                        styles.tabButton,
-                        activeTab === "find" && styles.activeTab
-                    ]}
+                    style={[styles.tabButton, activeTab === "find" && styles.activeTab]}
                 >
-                    <Text style={styles.tabText}>Find Friends</Text>
+                    <Text style={styles.tabText}>Find</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                     onPress={() => setActiveTab("myRequests")}
-                    style={[
-                        styles.tabButton,
-                        activeTab === "myRequests" && styles.activeTab
-                    ]}
+                    style={[styles.tabButton, activeTab === "myRequests" && styles.activeTab]}
                 >
-                    <Text style={styles.tabText}>My Requests</Text>
+                    <Text style={styles.tabText}>Sent</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                     onPress={() => setActiveTab("newRequests")}
-                    style={[
-                        styles.tabButton,
-                        activeTab === "newRequests" && styles.activeTab
-                    ]}
+                    style={[styles.tabButton, activeTab === "newRequests" && styles.activeTab]}
                 >
-                    <Text style={styles.tabText}>New Requests</Text>
+                    <Text style={styles.tabText}>Received</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={() => setActiveTab("friends")}
+                    style={[styles.tabButton, activeTab === "friends" && styles.activeTab]}
+                >
+                    <Text style={styles.tabText}>Friends</Text>
                 </TouchableOpacity>
             </View>
 
