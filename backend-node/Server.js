@@ -48,4 +48,6 @@ app.use("/notify", NotifyFriend);
 
 // Financial Route
 import AddIncome from "./router/AddIncome.js";
-app.use("/income", AddIncome);
+app.use("/transaction", AddIncome);
+import SavingPlan from "./router/SavingPlan.js";
+app.use("/saving", SavingPlan);

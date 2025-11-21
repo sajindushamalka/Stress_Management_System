@@ -10,11 +10,17 @@ import LectureInfo from "./src/academics_stress/LectureInfo";
 import { AuthContext } from "./src/context/AuthContext";
 import StudyTimeTable from "./src/academics_stress/StudyTimeTable";
 import FinancialDashboard from "./src/financial_stress/FinancialDashboard";
+import SavingPlan from "./src/financial_stress/SavingPlan";
+import ExpensesSection from "./src/financial_stress/ExpensesSection";
 import ScoialDashboard from "./src/social_stress/SocialDashboard";
 import FriendDashboard from "./src/social_stress/FriendsDashboard";
 import MLGenaratedTimeTable from "./src/academics_stress/MLGenaratedTimetable";
+<<<<<<< HEAD
 import PredictStress from "./src/social_stress/PredictStress";
 import SocailNotification from "./src/social_stress/SocailNotification";
+=======
+import FinanceNotification from "./src/financial_stress/FinanceNotification";
+>>>>>>> 2462989f6aca25aa73ec7aa37eccee0d5ac4a21d
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +58,9 @@ export default function AppNav() {
                         
                         {/* Financial Stress */}
                         <Stack.Screen name="FinancialDashboard" component={FinancialDashboard}/>
+                        <Stack.Screen name="SavingPlan" component={SavingPlan}/>
+                        <Stack.Screen name="ExpensesSection" component={ExpensesSection} />
+                        <Stack.Screen name="FinanceNotification" component={FinanceNotification} />
                     </>
                 )}
             </Stack.Navigator>
