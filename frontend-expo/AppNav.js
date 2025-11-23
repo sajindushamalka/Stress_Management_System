@@ -15,12 +15,10 @@ import ExpensesSection from "./src/financial_stress/ExpensesSection";
 import ScoialDashboard from "./src/social_stress/SocialDashboard";
 import FriendDashboard from "./src/social_stress/FriendsDashboard";
 import MLGenaratedTimeTable from "./src/academics_stress/MLGenaratedTimetable";
-<<<<<<< HEAD
 import PredictStress from "./src/social_stress/PredictStress";
 import SocailNotification from "./src/social_stress/SocailNotification";
-=======
 import FinanceNotification from "./src/financial_stress/FinanceNotification";
->>>>>>> 2462989f6aca25aa73ec7aa37eccee0d5ac4a21d
+
 
 const Stack = createNativeStackNavigator();
 

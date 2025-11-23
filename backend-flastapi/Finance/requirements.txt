@@ -1,7 +1,5 @@
-flask
-flask-cors
-pandas
-numpy
-scikit-learn
-pymongo
-joblib
+tensorflow==2.12.0
+scikit-learn>=1.2
+pandas>=1.3
+flask>=2.0
+gunicorn>=20.0
