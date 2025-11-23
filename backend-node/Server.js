@@ -41,6 +41,10 @@ import FreindGroup from "./router/FriendGroup.js";
 app.use("/friend", FreindGroup);
 import SavedTimetable from "./router/SavedTimetable.js";
 app.use("/timetable", SavedTimetable);
+import SocialStress from "./router/SocialStress.js";
+app.use("/soical", SocialStress);
+import NotifyFriend from "./router/NotifyFriend.js";
+app.use("/notify", NotifyFriend);
 
 // Financial Route
 import AddIncome from "./router/AddIncome.js";
