@@ -29,7 +29,7 @@ const Login = (props) => {
                     UserLogin();
                     console.log(response.data)
                     saveUserDeatils(response.data)
-                    props.navigation.navigate("Home"); // Navigate after setting the token
+                    //props.navigation.navigate("Home"); // Navigate after setting the token
                 })
                 .catch(() => {
                     alert("Incorrect Login!");

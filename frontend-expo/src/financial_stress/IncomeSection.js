@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -6,67 +6,73 @@ import {
   Dimensions,
   ActivityIndicator,
   TouchableOpacity,
+  FlatList,
   ScrollView,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { AuthContext } from "../context/AuthContext";
-import { LineChart } from "react-native-chart-kit";
-import Footer from "../pages/Footer";
 import Node from "../api/node/Node";
 import Header from "../pages/Header";
+import Footer from "../pages/Footer";
+import { AuthContext } from "../context/AuthContext";
+import { LinearGradient } from "expo-linear-gradient";
+import { LineChart } from "react-native-chart-kit";
 import Icon from "react-native-vector-icons/Feather";
 
-const ExpensesSection = () => {
+const IncomeSection = () => {
   const { userDetails } = useContext(AuthContext);
 
-  const [events, setEvents] = useState({});
+  const [incomeEvents, setIncomeEvents] = useState({});
+  const [loadingIncome, setLoadingIncome] = useState(true);
   const [activeTab, setActiveTab] = useState("All");
   const [activeWeekTab, setActiveWeekTab] = useState("This Week");
-  const [weeklyData, setWeeklyData] = useState({});
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchWeeklyCategoryData();
-    fetchAllTransactions();
-  }, []);
+  const [monthlyCategorySummary, setMonthlyCategorySummary] = useState({});
+  const [loadingSummary, setLoadingSummary] = useState(true);
 
-  const fetchWeeklyCategoryData = () => {
-    Node.get(`/transaction/weekly-category/${userDetails.RegisterdUser.email}`)
-      .then((res) => {
-        setWeeklyData(res.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  };
-
-  const fetchAllTransactions = () => {
+  // Fetch all transactions
+  const fetchAllIncome = () => {
     Node.get(`/transaction/all/${userDetails.RegisterdUser.email}`)
       .then((res) => {
         const formattedEvents = {};
-        res.data.forEach((item) => {
+
+        // Filter only income items
+        const incomeOnly = res.data.filter((item) => item.type === "income");
+
+        incomeOnly.forEach((item) => {
           if (!formattedEvents[item.date]) formattedEvents[item.date] = [];
           formattedEvents[item.date].push(item);
         });
-        setEvents(formattedEvents);
+
+        setIncomeEvents(formattedEvents);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => console.log(err))
+      .finally(() => setLoadingIncome(false));
   };
+
+  // Fetch monthly category-wise summary
+  const fetchMonthlyCategorySummary = () => {
+    Node.get(`/transaction/monthly-income/${userDetails.RegisterdUser.email}`)
+      .then((res) => setMonthlyCategorySummary(res.data))
+      .catch((err) => console.log(err))
+      .finally(() => setLoadingSummary(false));
+  };
+
+  useEffect(() => {
+    fetchAllIncome();
+    fetchMonthlyCategorySummary();
+  }, []);
 
   const getFilteredEvents = () => {
     if (activeTab === "Today") {
       const today = new Date().toISOString().split("T")[0];
-      return events[today] ? { [today]: events[today] } : {};
+      return incomeEvents[today] ? { [today]: incomeEvents[today] } : {};
     }
-    return events;
+    return incomeEvents;
   };
 
-  const filteredEvents = getFilteredEvents();
-
   const flatData = [];
+  const filteredEvents = getFilteredEvents();
   Object.keys(filteredEvents).forEach((date) =>
-    filteredEvents[date].forEach((item) => {
-      if (item.type === "expense") flatData.push(item);
-    })
+    filteredEvents[date].forEach((item) => flatData.push(item))
   );
 
   const getMonday = (date) => {
@@ -105,18 +111,18 @@ const ExpensesSection = () => {
       ? getDailyTotals(thisWeekItems)
       : getDailyTotals(lastWeekItems);
 
-  const renderTransaction = ({ item }) => (
-    <View style={styles.expenseCard}>
+  const renderIncome = ({ item }) => (
+    <View style={styles.incomeCard}>
       {activeTab === "All" && <Text style={styles.dateText}>{item.date}</Text>}
-      <View style={styles.expenseRow}>
+      <View style={styles.incomeRow}>
         <View style={styles.categoryWrapper}>
           <Icon
-            name="tag"
+            name="dollar-sign"
             size={20}
-            color="#FF8C00"
+            color="#4caf50"
             style={{ marginRight: 8 }}
           />
-          <Text style={styles.expenseText}>
+          <Text style={styles.incomeText}>
             {item.category} ({item.note})
           </Text>
         </View>
@@ -126,10 +132,10 @@ const ExpensesSection = () => {
   );
 
   return (
-    <LinearGradient colors={["#fff", "#f7f7f7"]} style={{ flex: 1 }}>
+    <LinearGradient colors={["#ffffff", "#f3ddc3"]} style={{ flex: 1 }}>
       <Header />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.heading}>Expenses Summary</Text>
+        <Text style={styles.heading}>Income Summary</Text>
 
         {/* Tabs */}
         <View style={styles.tabsRow}>
@@ -151,18 +157,19 @@ const ExpensesSection = () => {
           ))}
         </View>
 
-        {/* Transaction List */}
-        {flatData.length === 0 ? (
-          <Text style={styles.noDataText}>No expenses added yet.</Text>
+        {/* Income List */}
+        {loadingIncome ? (
+          <ActivityIndicator size="large" color="#4caf50" />
+        ) : flatData.length === 0 ? (
+          <Text style={styles.noDataText}>No income added yet.</Text>
         ) : (
-          <ScrollView
-            style={{ maxHeight: 5 * 80, marginBottom: 20 }}
-            nestedScrollEnabled={true}
-          >
-            {flatData
-              .sort((a, b) => new Date(b.date) - new Date(a.date))
-              .map((item, idx) => renderTransaction({ item, idx }))}
-          </ScrollView>
+          <View style={{ maxHeight: 5 * 80, marginBottom: 20 }}>
+            <ScrollView nestedScrollEnabled={true}>
+              {flatData
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .map((item, idx) => renderIncome({ item, idx }))}
+            </ScrollView>
+          </View>
         )}
 
         {/* Weekly Chart Tabs */}
@@ -198,37 +205,43 @@ const ExpensesSection = () => {
             backgroundGradientFrom: "#fff",
             backgroundGradientTo: "#f0f0f0",
             decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(255, 140, 0, ${opacity})`,
+            color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
             labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
             style: { borderRadius: 16 },
-            propsForDots: { r: "4", strokeWidth: "2", stroke: "#FF8C00" },
+            propsForDots: { r: "4", strokeWidth: "2", stroke: "#4caf50" },
           }}
           bezier
           style={{ marginVertical: 16, borderRadius: 16 }}
         />
 
+        {/* Monthly Category-wise Summary */}
         <Text style={[styles.subHeading, { marginTop: 40 }]}>
-          Weekly Category Summary
+          Monthly Income Breakdown
         </Text>
-        {loading ? (
-          <ActivityIndicator size="large" color="#FF8C00" />
-        ) : (
+        {loadingSummary ? (
+          <ActivityIndicator size="large" color="#4caf50" />
+        ) : Object.keys(monthlyCategorySummary).length > 0 ? (
           <View style={styles.alertsGrid}>
-            {Object.keys(weeklyData).map((cat, idx) => (
-              <View key={idx} style={styles.alertBox}>
+            {Object.keys(monthlyCategorySummary).map((cat) => (
+              <View
+                key={cat} 
+                style={[styles.alertBox, { borderLeftColor: "#4caf50" }]}
+              >
                 <View style={styles.alertHeader}>
-                  <Icon name="pie-chart" size={20} color="#FF8C00" />
+                  <Icon name="pie-chart" size={20} color="#4caf50" />
                   <Text style={styles.categoryText}>{cat}</Text>
                 </View>
                 <Text style={styles.transactionText}>
-                  {weeklyData[cat].transactions} transactions
+                  {monthlyCategorySummary[cat].transactions} transactions
                 </Text>
                 <Text style={styles.amountText}>
-                  Rs. {weeklyData[cat].totalAmount}
+                  Rs. {monthlyCategorySummary[cat].totalAmount}
                 </Text>
               </View>
             ))}
           </View>
+        ) : (
+          <Text style={styles.noDataText}>No data for this month</Text>
         )}
       </ScrollView>
       <Footer />
@@ -241,7 +254,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#FF8C00",
+    color: "#4caf50",
     textAlign: "center",
     marginVertical: 20,
   },
@@ -264,8 +277,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
   },
   activeTab: {
-    backgroundColor: "#FF8C00",
-    shadowColor: "#FF8C00",
+    backgroundColor: "#4caf50",
+    shadowColor: "#4caf50",
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 2,
@@ -273,7 +286,7 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 16, color: "#333", fontWeight: "500" },
   activeTabText: { color: "#fff", fontWeight: "700" },
   noDataText: { textAlign: "center", color: "#777", marginVertical: 20 },
-  expenseCard: {
+  incomeCard: {
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 14,
@@ -285,21 +298,21 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   dateText: { fontSize: 12, fontWeight: "600", color: "#999", marginBottom: 6 },
-  expenseRow: {
+  incomeRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   categoryWrapper: { flexDirection: "row", alignItems: "center", width: "70%" },
+  incomeText: { fontSize: 14, color: "#333" },
   alertsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     marginTop: 16,
   },
-
   alertBox: {
-    width: "48%", // two boxes per row
+    width: "48%",
     backgroundColor: "#fff",
     padding: 16,
     borderRadius: 20,
@@ -310,33 +323,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 4,
     borderLeftWidth: 4,
-    borderLeftColor: "#FF8C00", // accent color to make it premium
   },
-
-  alertHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-
+  alertHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   categoryText: {
     fontSize: 16,
     fontWeight: "700",
     color: "#111",
     marginLeft: 8,
   },
-
-  transactionText: {
-    fontSize: 13,
-    color: "#666",
-    marginBottom: 4,
-  },
-
-  amountText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FF3B30",
-  },
+  transactionText: { fontSize: 13, color: "#666", marginBottom: 4 },
+  amountText: { fontSize: 16, fontWeight: "700", color: "#4caf50" },
 });
 
-export default ExpensesSection;
+export default IncomeSection;

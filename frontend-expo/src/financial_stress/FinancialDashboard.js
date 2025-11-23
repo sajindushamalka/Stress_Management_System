@@ -202,7 +202,7 @@ const FinancialDashboard = () => {
       const res = await Node.post("/transaction/add", incomeData);
 
       if (res.status === 201) {
-        Alert.alert("Success", "Income Added Successfully!");
+        Alert.alert("Success", "Data Added Successfully!");
 
         setModalVisible(false);
         setType("");
@@ -257,9 +257,17 @@ const FinancialDashboard = () => {
             <FontAwesome6 name="money-check-dollar" size={28} color="#FF8C00" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.iconButton}
-          onPress={() => navigation.navigate("FinanceNotification")}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigation.navigate("FinanceNotification")}
+          >
             <Foundation name="alert" size={28} color="#FF8C00" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigation.navigate("Reminder")}
+          >
+            <Ionicons name="alarm-sharp" size={28} color="#FF8C00" />
           </TouchableOpacity>
         </View>
 
@@ -327,12 +335,15 @@ const FinancialDashboard = () => {
             )}
           </ScrollView>
         </View>
-        
+
         {/* Monthly Total Transaction Section */}
-        <Text style={styles.sectionHeading}>{monthName } Summary</Text>
+        <Text style={[styles.sectionHeading, {marginTop: 20}]}>{monthName} Summary</Text>
         <View style={styles.transactionRow}>
           {/* Income */}
-          <View style={styles.card}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("IncomeSection")}
+          >
             <Ionicons name="wallet" size={24} color="#f99010ff" />
             <Text style={styles.cardTitle}>Income</Text>
             <Text style={styles.cardAmount}>
@@ -341,7 +352,7 @@ const FinancialDashboard = () => {
             <Text style={styles.cardSub}>
               {monthlyTransaction?.income?.count ?? 0} transactions
             </Text>
-          </View>
+          </TouchableOpacity>
 
           {/* Monthly Expenses */}
           <TouchableOpacity
@@ -590,35 +601,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 5,
   },
-
   cardTitle: {
     fontSize: 13,
     marginTop: 5,
     fontWeight: "600",
     color: "#444",
   },
-
   cardAmount: {
     fontSize: 15,
     marginTop: 6,
     fontWeight: "bold",
     color: "#FF8C00",
   },
-
   cardAmountRed: {
     fontSize: 15,
     marginTop: 6,
     fontWeight: "bold",
     color: "#FF3B30",
   },
-
   cardAmountGreen: {
     fontSize: 15,
     marginTop: 6,
     fontWeight: "bold",
     color: "#28a745",
   },
-
   cardSub: {
     fontSize: 12,
     color: "#777",

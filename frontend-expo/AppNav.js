@@ -16,6 +16,8 @@ import ScoialDashboard from "./src/social_stress/SocialDashboard";
 import FriendDashboard from "./src/social_stress/FriendsDashboard";
 import MLGenaratedTimeTable from "./src/academics_stress/MLGenaratedTimetable";
 import FinanceNotification from "./src/financial_stress/FinanceNotification";
+import IncomeSection from "./src/financial_stress/IncomeSection";
+import Reminder from "./src/financial_stress/Reminder";
 
 const Stack = createNativeStackNavigator();
 
@@ -54,6 +56,8 @@ export default function AppNav() {
                         <Stack.Screen name="SavingPlan" component={SavingPlan}/>
                         <Stack.Screen name="ExpensesSection" component={ExpensesSection} />
                         <Stack.Screen name="FinanceNotification" component={FinanceNotification} />
+                        <Stack.Screen name="IncomeSection" component={IncomeSection} />
+                        <Stack.Screen name="Reminder" component={Reminder} />
                     </>
                 )}
             </Stack.Navigator>
