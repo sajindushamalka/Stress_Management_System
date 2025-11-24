@@ -32,6 +32,7 @@ const reminderSchema = new Schema(
       type: String,
       required: true,
     },
+    pushToken: { type: String },
   },
   { timestamps: true }
 );

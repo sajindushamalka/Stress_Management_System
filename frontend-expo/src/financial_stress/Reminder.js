@@ -7,20 +7,22 @@ import {
   FlatList,
   Alert,
   StyleSheet,
-  ScrollView,
-  Platform,
   Keyboard,
+  ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import Node from "../api/node/Node"; // Your API helper
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import Node from "../api/node/Node";
 import { AuthContext } from "../context/AuthContext";
 import Footer from "../pages/Footer";
+import Icon from "react-native-vector-icons/Feather";
+import Header from "../pages/Header";
 
 const frequencies = ["once", "daily", "weekly", "monthly"];
 
 const Reminder = () => {
   const { userDetails } = useContext(AuthContext);
+
   const [reminders, setReminders] = useState([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -29,16 +31,18 @@ const Reminder = () => {
   const [frequency, setFrequency] = useState("once");
   const [loading, setLoading] = useState(false);
 
+  // Fetch Reminders
   const fetchReminders = async () => {
     if (!userDetails) return;
     try {
       setLoading(true);
-      const response = await Node.get(`/reminder/user/${userDetails.RegisterdUser.email}`);
-      setReminders(response.data);
+      const email = userDetails.RegisterdUser.email;
+      const response = await Node.get(`/reminder/user/${email}`);
+      setReminders(response.data || []);
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      Alert.alert("Error", error.message);
+      Alert.alert("Error", error.response?.data?.message || error.message);
     }
   };
 
@@ -46,31 +50,44 @@ const Reminder = () => {
     fetchReminders();
   }, []);
 
+  // Add Reminder
   const handleAddReminder = async () => {
-    if (!title || !dueDate) {
-      Alert.alert("Validation", "Title and due date are required!");
+    if (!title.trim()) {
+      Alert.alert("Validation", "Title is required!");
       return;
     }
 
     try {
-      const payload = { title, description, dueDate, frequency, email: userDetails.RegisterdUser.email };
+      const payload = {
+        title,
+        description,
+        dueDate,
+        frequency,
+        email: userDetails.RegisterdUser.email,
+      };
+
       const response = await Node.post("/reminder/add", payload);
+
       Alert.alert("Success", response.data.message);
+
       setTitle("");
       setDescription("");
       setDueDate(new Date());
       setFrequency("once");
-      fetchReminders(); // Refresh list
+
+      fetchReminders();
     } catch (error) {
-      Alert.alert("Error", error.message);
+      Alert.alert("Error", error.response?.data?.message || error.message);
     }
   };
 
+  // Delete Reminder
   const handleDeleteReminder = async (id) => {
-    Alert.alert("Confirm Delete", "Are you sure you want to delete this reminder?", [
+    Alert.alert("Delete Reminder", "Do you want to delete this reminder?", [
       { text: "Cancel" },
       {
         text: "Delete",
+        style: "destructive",
         onPress: async () => {
           try {
             await Node.delete(`/reminder/delete/${id}`);
@@ -79,83 +96,105 @@ const Reminder = () => {
             Alert.alert("Error", error.message);
           }
         },
-        style: "destructive",
       },
     ]);
   };
 
+  // Render single reminder
   const renderReminder = ({ item }) => (
-    <View style={styles.reminderCard}>
+    <View style={styles.card}>
       <View style={{ flex: 1 }}>
-        <Text style={styles.reminderTitle}>{item.title}</Text>
-        <Text style={styles.reminderDesc}>{item.description}</Text>
-        <Text style={styles.reminderMeta}>
-          Due: {new Date(item.dueDate).toLocaleString()} | Frequency: {item.frequency}
-        </Text>
+        <Text style={styles.cardTitle}>{item.title}</Text>
+
+        {item.description ? (
+          <Text style={styles.cardDesc}>{item.description}</Text>
+        ) : null}
+
+        <View style={styles.metaRow}>
+          <Icon name="clock" size={16} color="#FF8C00" />
+          <Text style={styles.cardMeta}>
+            {new Date(item.dueDate).toLocaleString()}
+          </Text>
+          <Text style={styles.cardMeta}> | {item.frequency}</Text>
+        </View>
       </View>
-      <TouchableOpacity onPress={() => handleDeleteReminder(item._id)} style={styles.deleteBtn}>
-        <Text style={styles.deleteBtnText}>Delete</Text>
+
+      <TouchableOpacity
+        onPress={() => handleDeleteReminder(item._id)}
+        style={styles.deleteBtn}
+      >
+        <Icon name="trash-2" size={20} color="#FF3B30" />
       </TouchableOpacity>
     </View>
   );
 
   return (
     <LinearGradient colors={["#ffffff", "#f3ddc3"]} style={{ flex: 1 }}>
-      {/* <ScrollView contentContainerStyle={styles.scrollContent}> */}
+      <Header />
+      <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Reminders</Text>
+        <Text style={styles.descriptionText}>
+          Stay on top of your schedule.
+        </Text>
 
-        {/* Add Reminder Form */}
+        {/* Form */}
         <View style={styles.form}>
           <TextInput
-            style={styles.input}
-            placeholder="Title"
+            placeholder="Reminder Title"
             value={title}
             onChangeText={setTitle}
+            style={styles.input}
           />
+
           <TextInput
-            style={[styles.input, { height: 80 }]}
-            placeholder="Description"
-            multiline
+            placeholder="Description (optional)"
             value={description}
             onChangeText={setDescription}
+            multiline
+            style={[styles.input, { height: 80 }]}
           />
+
+          {/* Date Button */}
           <TouchableOpacity
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => {
+              Keyboard.dismiss();
+              setShowDatePicker(true);
+            }}
             style={styles.dateBtn}
           >
-            <Text style={styles.dateBtnText}>
-              {`Due Date: ${dueDate.toLocaleString()}`}
-            </Text>
+            <Icon name="calendar" size={18} color="#FF8C00" />
+            <Text style={styles.dateBtnText}>{dueDate.toLocaleString()}</Text>
           </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              value={dueDate}
-              mode="datetime"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) setDueDate(selectedDate);
-              }}
-            />
-          )}
 
-          <View style={styles.frequencyContainer}>
+          {/* Modal Date Picker */}
+          <DateTimePickerModal
+            isVisible={showDatePicker}
+            mode="datetime"
+            onConfirm={(date) => {
+              setDueDate(date);
+              setShowDatePicker(false);
+            }}
+            onCancel={() => setShowDatePicker(false)}
+          />
+
+          {/* Frequencies */}
+          <View style={styles.freqRow}>
             {frequencies.map((f) => (
               <TouchableOpacity
                 key={f}
                 onPress={() => setFrequency(f)}
                 style={[
                   styles.freqBtn,
-                  frequency === f && styles.freqBtnSelected,
+                  frequency === f && styles.freqBtnActive,
                 ]}
               >
                 <Text
                   style={[
-                    styles.freqBtnText,
-                    frequency === f && styles.freqBtnTextSelected,
+                    styles.freqText,
+                    frequency === f && styles.freqTextActive,
                   ]}
                 >
-                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                  {f}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -166,19 +205,22 @@ const Reminder = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Reminder List */}
         <Text style={styles.subHeading}>Your Reminders</Text>
+
         {loading ? (
-          <Text style={{ textAlign: "center", marginVertical: 20 }}>Loading...</Text>
+          <Text style={styles.noData}>Loading...</Text>
         ) : reminders.length === 0 ? (
-          <Text style={{ textAlign: "center", marginVertical: 20 }}>No reminders found.</Text>
+          <Text style={styles.noData}>No reminders yet.</Text>
         ) : (
           <FlatList
-            data={reminders.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))}
+            data={reminders}
             renderItem={renderReminder}
             keyExtractor={(item) => item._id}
+            scrollEnabled={false}
           />
         )}
+      </ScrollView>
+
       <Footer />
     </LinearGradient>
   );
@@ -187,69 +229,146 @@ const Reminder = () => {
 export default Reminder;
 
 const styles = StyleSheet.create({
-  scrollContent: { padding: 20, paddingBottom: 100 },
+  container: {
+    paddingHorizontal: 20,
+    paddingBottom: 120,
+  },
+
   heading: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#4caf50",
+    color: "#FF8C00",
     textAlign: "center",
-    marginVertical: 20,
+    marginTop: 20,
+  },
+  descriptionText: {
+    fontSize: 15,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 25,
+  },
+  subHeading: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginTop: 30,
+    color: "#333",
   },
   form: {
     backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    padding: 18,
+    borderRadius: 20,
     elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
   },
+
   input: {
+    backgroundColor: "#fafafa",
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: "#f9f9f9",
-  },
-  dateBtn: {
+    borderColor: "#ddd",
     padding: 12,
-    backgroundColor: "#e0f2f1",
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  dateBtnText: { color: "#00796b" },
-  frequencyContainer: { flexDirection: "row", justifyContent: "space-between", marginBottom: 15 },
-  freqBtn: { padding: 8, borderRadius: 6, borderWidth: 1, borderColor: "#ccc" },
-  freqBtnSelected: { backgroundColor: "#4caf50", borderColor: "#4caf50" },
-  freqBtnText: { color: "#555", textAlign: "center" },
-  freqBtnTextSelected: { color: "#fff" },
-  addBtn: {
-    backgroundColor: "#4caf50",
-    padding: 15,
-    borderRadius: 8,
-  },
-  addBtnText: { color: "#fff", fontWeight: "bold", textAlign: "center" },
-  subHeading: { fontSize: 22, fontWeight: "600", marginVertical: 15, color: "#333" },
-  reminderCard: {
-    flexDirection: "row",
-    padding: 15,
-    backgroundColor: "#fff",
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    fontSize: 15,
+  },
+
+  dateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF3E5",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+
+  dateBtnText: {
+    marginLeft: 10,
+    fontSize: 15,
+    color: "#FF8C00",
+  },
+
+  freqRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 10,
+  },
+
+  freqBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    backgroundColor: "#eee",
+  },
+
+  freqBtnActive: {
+    backgroundColor: "#FF8C00",
     elevation: 3,
   },
-  reminderTitle: { fontSize: 16, fontWeight: "bold", color: "#333", marginBottom: 5 },
-  reminderDesc: { fontSize: 14, color: "#555", marginBottom: 5 },
-  reminderMeta: { fontSize: 12, color: "#999" },
+
+  freqText: {
+    color: "#333",
+    fontWeight: "500",
+  },
+
+  freqTextActive: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+
+  addBtn: {
+    backgroundColor: "#FF8C00",
+    padding: 14,
+    borderRadius: 14,
+    marginTop: 10,
+  },
+
+  addBtnText: {
+    textAlign: "center",
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+
+  /* Reminder Cards */
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 16,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+    flexDirection: "row",
+  },
+
+  cardTitle: { fontSize: 17, fontWeight: "700", color: "#222" },
+
+  cardDesc: { marginTop: 4, fontSize: 14, color: "#555" },
+
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+  },
+
+  cardMeta: {
+    fontSize: 12,
+    color: "#777",
+    marginLeft: 6,
+  },
+
   deleteBtn: {
     justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 10,
+    paddingLeft: 12,
   },
-  deleteBtnText: { color: "#f44336", fontWeight: "bold" },
+
+  noData: {
+    textAlign: "center",
+    marginVertical: 20,
+    color: "#777",
+  },
 });

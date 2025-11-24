@@ -111,8 +111,8 @@ const IncomeSection = () => {
       ? getDailyTotals(thisWeekItems)
       : getDailyTotals(lastWeekItems);
 
-  const renderIncome = ({ item }) => (
-    <View style={styles.incomeCard}>
+  const renderIncome = ({ item, idx }) => (
+    <View key={item._id || idx} style={styles.incomeCard}>
       {activeTab === "All" && <Text style={styles.dateText}>{item.date}</Text>}
       <View style={styles.incomeRow}>
         <View style={styles.categoryWrapper}>

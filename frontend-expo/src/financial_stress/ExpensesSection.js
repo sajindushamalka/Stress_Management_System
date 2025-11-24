@@ -163,7 +163,11 @@ const ExpensesSection = () => {
           >
             {flatData
               .sort((a, b) => new Date(b.date) - new Date(a.date))
-              .map((item, idx) => renderTransaction({ item, idx }))}
+              .map((item, idx) => (
+                <View key={item._id || idx}>
+                  {renderTransaction({ item, idx })}
+                </View>
+              ))}
           </ScrollView>
         )}
 

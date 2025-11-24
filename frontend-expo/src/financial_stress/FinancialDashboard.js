@@ -278,6 +278,7 @@ const FinancialDashboard = () => {
             flexDirection: "row",
             justifyContent: "center",
             marginVertical: 10,
+            marginTop: 20,
           }}
         >
           <TouchableOpacity
@@ -304,8 +305,11 @@ const FinancialDashboard = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={{ maxHeight: 250, margin: 10 }}>
-          <ScrollView>
+        <View style={{ height: 250, margin: 10 }}>
+          <ScrollView
+            nestedScrollEnabled={true}
+            contentContainerStyle={{ paddingVertical: 5 }}
+          >
             {flatData.length === 0 ? (
               <Text style={{ textAlign: "center", color: "#555" }}>
                 No data added yet.
@@ -319,6 +323,7 @@ const FinancialDashboard = () => {
                         📅 {item.date} - {item.type.toUpperCase()}
                       </Text>
                     )}
+
                     <View
                       style={[
                         styles.row,
@@ -339,6 +344,7 @@ const FinancialDashboard = () => {
                           Rs. {item.amount}
                         </Text>
                       </View>
+
                       <TouchableOpacity onPress={() => deleteData(item)}>
                         <MaterialIcons
                           name="delete-outline"
