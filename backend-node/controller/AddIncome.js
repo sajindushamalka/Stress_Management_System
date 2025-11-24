@@ -387,3 +387,49 @@ Return ONLY the JSON response.
     });
   }
 };
+
+//Yearly Month-wise Balance get
+export const YearlyBalanceSummary = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const currentYear = new Date().getFullYear();
+
+    // Convert to string format: YYYY-MM-DD
+    const startDate = `${currentYear}-01-01`;
+    const endDate   = `${currentYear}-12-31`;
+
+    // Fetch all transactions as strings
+    const transactions = await AddIncome.find({
+      email,
+      date: { $gte: startDate, $lte: endDate }
+    });
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    const balanceByMonth = monthNames.map((m) => ({
+      month: m,
+      balance: 0
+    }));
+
+    transactions.forEach((t) => {
+      const monthIndex = new Date(t.date).getMonth(); // String → Date works
+      const amount = Number(t.amount);
+
+      if (t.type === "income") balanceByMonth[monthIndex].balance += amount;
+      else if (t.type === "expense") balanceByMonth[monthIndex].balance -= amount;
+    });
+
+    return res.status(200).json({
+      year: currentYear,
+      monthlyBalance: balanceByMonth
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to calculate yearly balance summary",
+      error: error.message,
+    });
+  }
+};

@@ -126,11 +126,13 @@ const ExpensesSection = () => {
   );
 
   return (
-    <LinearGradient colors={["#fff", "#f7f7f7"]} style={{ flex: 1 }}>
+    <LinearGradient colors={["#ffffff", "#f3ddc3"]} style={{ flex: 1 }}>
       <Header />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.heading}>Expenses Summary</Text>
-
+        <Text style={styles.descriptionText}>
+          A complete overview of your expenses across all periods.
+        </Text>
         {/* Tabs */}
         <View style={styles.tabsRow}>
           {["All", "Today"].map((tab) => (
@@ -245,10 +247,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginVertical: 20,
   },
+  descriptionText: {
+    fontSize: 15,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 25,
+  },
   subHeading: {
     fontSize: 20,
     fontWeight: "600",
-    marginVertical: 12,
     color: "#333",
   },
   tabsRow: {

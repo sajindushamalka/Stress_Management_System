@@ -45,10 +45,14 @@ const FinanceNotification = () => {
   };
 
   return (
-    <LinearGradient colors={["#ffffff", "#fdfaf6"]} style={styles.root}>
+    <LinearGradient colors={["#ffffff", "#f3ddc3"]} style={styles.root}>
       <Header />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}> AI Financial Insights</Text>
+        <Text style={styles.title}>AI Financial Insights</Text>
+
+        <Text style={styles.descriptionText}>
+          AI-driven analysis to plan your finances effectively.
+        </Text>
 
         {loading ? (
           <ActivityIndicator size="large" color="#ff9800" />
@@ -56,22 +60,24 @@ const FinanceNotification = () => {
           <>
             {/* Stress Level */}
             {aiData.stressLevel && (
-              <View style={styles.card}>
+              <View style={[styles.card, { marginTop: 10 }]}>
                 <View style={styles.cardHeader}>
                   <MaterialIcons name="warning" size={22} color="#ff9800" />
                   <Text style={styles.cardTitle}>Stress Level</Text>
                 </View>
+
                 <Progress.Bar
                   progress={aiData.stressLevel / 100}
                   width={null}
                   height={14}
-                  borderRadius={7}
+                  borderRadius={8}
                   color={getDynamicRedColor(aiData.stressLevel)}
                   borderWidth={0}
-                  unfilledColor="#e0e0e0"
+                  unfilledColor="#f2f2f2"
                 />
+
                 <Text style={styles.progressLabel}>
-                  {aiData.stressLevel}% - {aiData.stressLevelLevel || ""}
+                  {aiData.stressLevel}% — {aiData.stressLevelLevel}
                 </Text>
               </View>
             )}
@@ -82,11 +88,12 @@ const FinanceNotification = () => {
                 <MaterialIcons name="notifications" size={22} color="#ff9800" />
                 <Text style={styles.cardTitle}>Alerts</Text>
               </View>
+
               {aiData.alerts?.length > 0 ? (
                 aiData.alerts.map((alert, index) => (
                   <View key={index} style={styles.alertCard}>
                     <Entypo name="dot-single" size={20} color="#ff9800" />
-                    <Text style={styles.alertText}>
+                    <Text style={styles.alertText} numberOfLines={4}>
                       {typeof alert === "string"
                         ? alert
                         : JSON.stringify(alert)}
@@ -99,27 +106,25 @@ const FinanceNotification = () => {
             </View>
 
             {/* Recommendations */}
-            <Text style={[styles.subTitle, { marginTop: 20 }]}>
-              <MaterialIcons name="thumb-up" size={20} color="#ff9800" />{" "}
-              Recommendations
-            </Text>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Recommendations</Text>
+            </View>
+
             {aiData.recommendations?.length > 0 ? (
               aiData.recommendations.map((rec, index) => (
-                <View key={index} style={styles.card}>
-                  <View style={styles.recommendationRow}>
-                    <MaterialIcons
-                      name="check-circle"
-                      size={18}
-                      color="#ff9800"
-                    />
-                    <Text style={styles.recommendationText}>
-                      {typeof rec === "string"
-                        ? rec
-                        : `Category: ${rec.category || "N/A"} - Amount: ${
-                            rec.amount ? "Rs " + rec.amount : "N/A"
-                          }`}
-                    </Text>
-                  </View>
+                <View key={index} style={styles.recommendationCard}>
+                  <MaterialIcons
+                    name="check-circle"
+                    size={20}
+                    color="#ff9800"
+                  />
+                  <Text style={styles.recommendationText} numberOfLines={4}>
+                    {typeof rec === "string"
+                      ? rec
+                      : `Category: ${rec.category || "N/A"} — Amount: ${
+                          rec.amount ? "Rs " + rec.amount : "N/A"
+                        }`}
+                  </Text>
                 </View>
               ))
             ) : (
@@ -127,16 +132,17 @@ const FinanceNotification = () => {
             )}
 
             {/* High Spending Categories */}
-            <View style={styles.card}>
+            <View style={[styles.card, { marginTop: 10 }]}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>High Spending Categories</Text>
               </View>
+
               <View style={styles.categoriesContainer}>
                 {aiData.highSpendingCategories?.length > 0 ? (
                   aiData.highSpendingCategories.map((cat, idx) => (
                     <LinearGradient
                       key={idx}
-                      colors={["#ffe0b2", "#ffcc80"]}
+                      colors={["#ffe7c4", "#ffd8a0"]}
                       style={styles.categoryBox}
                     >
                       <Text style={styles.categoryText}>{cat}</Text>
@@ -157,7 +163,9 @@ const FinanceNotification = () => {
                   <MaterialIcons name="feedback" size={22} color="#ff9800" />
                   <Text style={styles.cardTitle}>Financial Feedback</Text>
                 </View>
-                <Text style={styles.feedbackText}>{aiData.feedback}</Text>
+                <Text style={styles.feedbackText} numberOfLines={8}>
+                  {aiData.feedback}
+                </Text>
               </View>
             )}
           </>
@@ -165,6 +173,7 @@ const FinanceNotification = () => {
           <Text style={styles.noData}>No AI data available.</Text>
         )}
       </ScrollView>
+
       <Footer />
     </LinearGradient>
   );
@@ -174,75 +183,137 @@ export default FinanceNotification;
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { padding: 16, paddingBottom: 120 },
+
+  content: {
+    padding: 18,
+    paddingBottom: 140,
+  },
+
   title: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#ff9800",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 6,
   },
-  subTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#ff9800",
-    marginBottom: 12,
+
+  descriptionText: {
+    fontSize: 15,
+    color: "#777",
+    textAlign: "center",
+    marginBottom: 30,
   },
   card: {
     backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 16,
+    padding: 18,
+    borderRadius: 18,
+    marginBottom: 20,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 3 },
     shadowRadius: 6,
     elevation: 3,
+    borderWidth: 0.4,
+    borderColor: "#f4c38a",
   },
-  cardHeader: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
-  cardTitle: { fontSize: 18, fontWeight: "600", color: "#333", marginLeft: 8 },
+
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#333",
+    marginLeft: 8,
+  },
+
   progressLabel: {
     textAlign: "right",
     fontSize: 14,
     marginTop: 6,
-    color: "#555",
+    color: "#444",
+    fontWeight: "600",
   },
   alertCard: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff3e0",
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 8,
+    alignItems: "flex-start",
+    backgroundColor: "#fff5e6",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 0.5,
+    borderColor: "#ffce94",
   },
-  alertText: { color: "#ff9800", fontSize: 14, marginLeft: 6 },
-  recommendationRow: {
+
+  alertText: {
+    color: "#cc6b00",
+    fontSize: 14,
+    marginLeft: 4,
+    flex: 1,
+  },
+
+  /** Recommendations */
+  recommendationCard: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
+    alignItems: "flex-start",
+    backgroundColor: "#fff",
+    padding: 14,
+    marginBottom: 12,
+    borderRadius: 14,
+    borderWidth: 0.5,
+    borderColor: "#ffd8a4",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
   },
+
   recommendationText: {
     fontSize: 15,
-    lineHeight: 22,
     color: "#333",
     marginLeft: 6,
+    flex: 1,
+    lineHeight: 20,
   },
-  categoriesContainer: { flexDirection: "row", flexWrap: "wrap", marginTop: 8 },
+
+  /** Categories */
+  categoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 4,
+  },
+
   categoryBox: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 24,
-    marginRight: 8,
-    marginBottom: 8,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 30,
+    marginRight: 10,
+    marginBottom: 10,
+    elevation: 2,
   },
-  categoryText: { color: "#bf360c", fontSize: 14, fontWeight: "600" },
+
+  categoryText: {
+    color: "#b04a00",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  /** Feedback */
   feedbackText: {
     fontSize: 14,
     color: "#555",
-    fontStyle: "italic",
     lineHeight: 20,
+    fontStyle: "italic",
   },
-  noData: { color: "#888", fontSize: 14, fontStyle: "italic", marginTop: 4 },
+
+  /** No Data */
+  noData: {
+    color: "#999",
+    fontSize: 14,
+    fontStyle: "italic",
+  },
 });

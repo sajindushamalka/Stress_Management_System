@@ -1,0 +1,10 @@
+Flask
+flask-cors
+numpy
+opencv-python
+tensorflow
+keras
+joblib
+urllib3
+scikit-learn
+h5py

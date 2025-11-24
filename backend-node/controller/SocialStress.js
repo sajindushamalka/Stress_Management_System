@@ -1,5 +1,6 @@
 import SocialStress from '../model/SocialStress.js'
 import moment from "moment";
+import axios from "axios";
 
 
 export const AddSocialStress = async (req, res) => {
@@ -67,4 +68,63 @@ export const GetMyLastValues = async (req, res) => {
             error: error.message,
         });
     }
+};
+
+
+
+export const getVideosByStress = async (req, res) => {
+  try {
+    const { user_email } = req.params;
+
+    // 1. Get last stress prediction for this user
+    const record = await SocialStress.findOne({ user_email })
+      .sort({ date: -1 })
+      .lean();
+
+    if (!record) {
+      return res.status(404).json({ message: "No stress record found" });
+    }
+
+    // 2. Extract stress level
+    const stressLevel = record.predicted_label; // "Low", "Medium", "High"
+    console.log("Detected stress level:", stressLevel);
+
+    // 3. Map to correct YouTube search query
+    const queryMap = {
+      Low: "relaxing music meditation stress relief",
+      Medium: "mindfulness stress management techniques",
+      High: "quick stress relief exercises deep breathing",
+    };
+
+    const query = queryMap[stressLevel] || "stress relief";
+
+    // 4. Fetch videos from YouTube API
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ message: "Missing YouTube API Key" });
+    }
+
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(
+      query
+    )}&key=${apiKey}&type=video`;
+
+    const response = await axios.get(url);
+
+    const videos = response.data.items.map((item) => ({
+      title: item.snippet.title,
+      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+      thumbnail: item.snippet.thumbnails.medium.url,
+    }));
+
+    res.status(200).json({
+      stressLevel,
+      videos,
+    });
+  } catch (error) {
+    console.error("Video Fetch Error:", error);
+    res.status(500).json({
+      message: "Error fetching stress-based videos",
+      error: error.message,
+    });
+  }
 };

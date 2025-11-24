@@ -22,6 +22,7 @@ import {
 } from "@expo/vector-icons";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigation } from "@react-navigation/native";
+import MonthlyBalanceChart from "./MonthlyBalanceChart";
 
 const FinancialDashboard = () => {
   const { userDetails } = useContext(AuthContext);
@@ -310,34 +311,53 @@ const FinancialDashboard = () => {
                 No data added yet.
               </Text>
             ) : (
-              flatData.map((item, index) => (
-                <View key={index} style={{ marginVertical: 4 }}>
-                  {activeTab === "All" && (
-                    <Text style={{ fontWeight: "bold" }}>
-                      📅 {item.date} - {item.type.toUpperCase()}
-                    </Text>
-                  )}
-                  <View style={styles.row}>
-                    <Text>
-                      {activeTab === "Today" && `${item.type.toUpperCase()} -`}
-                      {item.category} ({item.note}) - Rs. {item.amount}
-                    </Text>
-                    <TouchableOpacity onPress={() => deleteData(item)}>
-                      <MaterialIcons
-                        name="delete-outline"
-                        size={20}
-                        color="#f95353ff"
-                      />
-                    </TouchableOpacity>
+              (activeTab === "All" ? [...flatData].reverse() : flatData).map(
+                (item, index) => (
+                  <View key={index} style={{ marginVertical: 4 }}>
+                    {activeTab === "All" && (
+                      <Text style={{ fontWeight: "bold" }}>
+                        📅 {item.date} - {item.type.toUpperCase()}
+                      </Text>
+                    )}
+                    <View
+                      style={[
+                        styles.row,
+                        {
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          paddingVertical: 1,
+                        },
+                      ]}
+                    >
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text>
+                          {activeTab === "Today" &&
+                            `${item.type.toUpperCase()} - `}
+                          {item.category} ({item.note})
+                        </Text>
+                        <Text style={{ fontWeight: "bold" }}>
+                          Rs. {item.amount}
+                        </Text>
+                      </View>
+                      <TouchableOpacity onPress={() => deleteData(item)}>
+                        <MaterialIcons
+                          name="delete-outline"
+                          size={24}
+                          color="#f95353ff"
+                        />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              ))
+                )
+              )
             )}
           </ScrollView>
         </View>
 
         {/* Monthly Total Transaction Section */}
-        <Text style={[styles.sectionHeading, {marginTop: 20}]}>{monthName} Summary</Text>
+        <Text style={[styles.sectionHeading, { marginTop: 20 }]}>
+          {monthName} Summary
+        </Text>
         <View style={styles.transactionRow}>
           {/* Income */}
           <TouchableOpacity
@@ -385,6 +405,12 @@ const FinancialDashboard = () => {
             </Text>
             <Text style={styles.cardSub}>Updated</Text>
           </View>
+        </View>
+        <Text style={[styles.sectionHeading, { marginTop: 30 }]}>
+          Yearly Balance
+        </Text>
+        <View>
+          <MonthlyBalanceChart email={userDetails.RegisterdUser.email} />
         </View>
       </ScrollView>
 
@@ -555,24 +581,24 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     alignItems: "center",
     marginTop: 20,
-    paddingVertical: 10,
   },
   iconButton: {
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 10,
-    width: 100,
-    elevation: 3,
+    borderRadius: 16,
+    padding: 12,
+    width: 80,
+    elevation: 5,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 1, height: 2 },
-    shadowRadius: 4,
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
   },
+
   row: {
     flexDirection: "row",
     justifyContent: "space-between",

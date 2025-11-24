@@ -136,7 +136,9 @@ const IncomeSection = () => {
       <Header />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.heading}>Income Summary</Text>
-
+        <Text style={styles.descriptionText}>
+          Monitor your income to plan your savings effectively.
+        </Text>
         {/* Tabs */}
         <View style={styles.tabsRow}>
           {["All", "Today"].map((tab) => (
@@ -224,7 +226,7 @@ const IncomeSection = () => {
           <View style={styles.alertsGrid}>
             {Object.keys(monthlyCategorySummary).map((cat) => (
               <View
-                key={cat} 
+                key={cat}
                 style={[styles.alertBox, { borderLeftColor: "#4caf50" }]}
               >
                 <View style={styles.alertHeader}>
@@ -257,6 +259,12 @@ const styles = StyleSheet.create({
     color: "#4caf50",
     textAlign: "center",
     marginVertical: 20,
+  },
+  descriptionText: {
+    fontSize: 15,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 25,
   },
   subHeading: {
     fontSize: 20,

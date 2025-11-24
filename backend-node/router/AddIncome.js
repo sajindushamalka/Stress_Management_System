@@ -6,7 +6,8 @@ import {
   DeleteIncome,
   MonthlyIncomeCategory,
   WeeklyExpenseCategory,
-  analyzeFinances  
+  analyzeFinances ,
+  YearlyBalanceSummary 
 } from '../controller/AddIncome.js';
 
 const router = express.Router();
@@ -18,6 +19,7 @@ router.get('/weekly-category/:email', WeeklyExpenseCategory);
 router.get('/monthly-income/:email', MonthlyIncomeCategory);
 router.delete('/remove/:id', DeleteIncome);
 router.get('/analyze/:email', analyzeFinances);
+router.get('/monthly-balance/:email', YearlyBalanceSummary);
 
 
 export default router;
