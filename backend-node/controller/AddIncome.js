@@ -54,6 +54,7 @@ export const GetAllIncomeByEmail = async (req, res) => {
   }
 };
 
+
 export const MonthlySummaryCal = async (req, res) => {
   try {
     const { email } = req.params;

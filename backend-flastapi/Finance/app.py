@@ -87,7 +87,13 @@ if __name__ == "__main__":
 # def allocate_expenses(income, expenses, saving_amount, time_months):
 #     # total flexible expense
 #     total_expense = sum(expenses.values())
-#     max_saving_possible = income - total_expense
+#     max_saving_possible = in= round(amt * scaling_factor, 2)
+    
+#     # generate weekly, monthly, 3-month breakdown
+#     weekly = {k: round(v/4,2) for k,v in allocation.items()}
+#     three_month = {k: round(v*3,2) for k,v in allocation.items()}
+    
+#     return allocation, weekly, three_monthcome - total_expense
 #     scaling_factor = max(0, (income - saving_amount) / total_expense)
     
 #     allocation = {}
@@ -95,13 +101,7 @@ if __name__ == "__main__":
 #         if cat == 'Tuition & Academic Fees':  # fixed
 #             allocation[cat] = amt
 #         else:
-#             allocation[cat] = round(amt * scaling_factor, 2)
-    
-#     # generate weekly, monthly, 3-month breakdown
-#     weekly = {k: round(v/4,2) for k,v in allocation.items()}
-#     three_month = {k: round(v*3,2) for k,v in allocation.items()}
-    
-#     return allocation, weekly, three_month
+#             allocation[cat] 
 
 
 
